@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1a17">
+  <meta name="description" content="Cytisine course companion — pill schedule and daily guidance for your 25-day quit plan.">
+  <title>Cytisinio</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cytisinio">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+
+    <!-- Setup screen -->
+    <section id="screen-setup" class="screen" hidden>
+      <div class="hero">
+        <div class="hero-icon">💊</div>
+        <h1>Cytisinio</h1>
+        <p class="subtitle">Your 25-day cytisine course companion<br>(Desmoxan · Recigar · Tabex · Dextasine)</p>
+      </div>
+
+      <form id="setup-form" class="card">
+        <label for="start-datetime">When did you take (or will you take) your first pill?</label>
+        <input type="datetime-local" id="start-datetime" required>
+
+        <label for="wake-time">Usual time of your first pill each day</label>
+        <input type="time" id="wake-time" value="08:00" required>
+        <p class="hint">Daily pill times are spread from this hour. You can change it later.</p>
+
+        <label for="mode-select">Course length</label>
+        <select id="mode-select">
+          <option value="25">Standard — 25 days (~101 pills)</option>
+          <option value="75">Extended maintenance — 75 days (~201 pills)</option>
+        </select>
+        <p class="hint">75-day mode adds 50 maintenance days at 1 pill every 12 h — shown in trials to help prevent relapse in the first months. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12881894/" target="_blank" rel="noopener">Source</a></p>
+
+        <button type="submit" class="btn-primary">Start my course</button>
+      </form>
+
+      <div class="card muted-card">
+        <h2>The standard course</h2>
+        <table class="plan-table">
+          <tr><td>Days 1–3</td><td>1 pill every 2 h</td><td>6/day</td></tr>
+          <tr><td>Days 4–12</td><td>1 pill every 2.5 h</td><td>5/day</td></tr>
+          <tr><td>Days 13–16</td><td>1 pill every 3 h</td><td>4/day</td></tr>
+          <tr><td>Days 17–20</td><td>1 pill every 5 h</td><td>3/day</td></tr>
+          <tr><td>Days 21–25</td><td>1–2 pills a day</td><td>≤2/day</td></tr>
+        </table>
+        <p class="hint">You must stop smoking completely by day 5 at the latest.</p>
+      </div>
+
+      <p class="disclaimer">This app is a schedule helper, not medical advice. Follow your package leaflet and talk to a doctor or pharmacist if unsure.</p>
+    </section>
+
+    <!-- Main screen -->
+    <section id="screen-main" class="screen" hidden>
+      <header class="top">
+        <div>
+          <h1 id="day-title">Day 1 of 25</h1>
+          <p id="phase-label" class="subtitle"></p>
+        </div>
+        <button id="btn-settings" class="btn-icon" aria-label="Settings">⚙️</button>
+      </header>
+
+      <div id="quit-banner" class="banner" hidden></div>
+
+      <div class="card progress-card">
+        <div class="progress-row">
+          <div class="progress-head"><span>Time</span><span id="time-pct">0%</span></div>
+          <div class="bar"><div id="time-bar" class="bar-fill"></div></div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-head"><span>Pills taken</span><span id="pills-pct">0 / 0 · 0%</span></div>
+          <div class="bar"><div id="pills-bar" class="bar-fill pills"></div></div>
+        </div>
+      </div>
+
+      <div class="card next-pill-card">
+        <p class="card-label">Next pill</p>
+        <p id="next-pill-time" class="big-time">–</p>
+        <p id="next-pill-countdown" class="countdown"></p>
+        <button id="btn-took" class="btn-primary btn-took">💊 I took a pill</button>
+        <p id="last-taken" class="hint last-taken" hidden></p>
+      </div>
+
+      <div class="card">
+        <p class="card-label">Today's pills · <span id="taken-count"></span></p>
+        <ul id="today-times" class="pill-times"></ul>
+        <p class="hint">Crossed out = logged. Upcoming times are projected from your last logged pill.</p>
+        <button type="button" id="btn-backfill-toggle" class="link-btn backfill-toggle">＋ log a pill at another time</button>
+        <div id="backfill-row" class="backfill-row" hidden>
+          <input type="time" id="backfill-time">
+          <button type="button" id="btn-backfill-add" class="btn-primary btn-small">Add</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-label">What to expect today</p>
+        <p id="day-guidance"></p>
+      </div>
+
+      <div class="card">
+        <p class="card-label">Coming up</p>
+        <ul id="upcoming" class="upcoming-list"></ul>
+      </div>
+
+      <p class="disclaimer">Schedule helper only — follow your leaflet. Stop and see a doctor if you have chest pain, severe nausea or an allergic reaction.</p>
+    </section>
+
+    <!-- Future start screen -->
+    <section id="screen-future" class="screen" hidden>
+      <div class="hero">
+        <div class="hero-icon">📅</div>
+        <h1>Not started yet</h1>
+        <p id="future-info" class="subtitle"></p>
+        <button id="btn-future-settings" class="btn-secondary">Change start</button>
+      </div>
+    </section>
+
+    <!-- Completed screen -->
+    <section id="screen-done" class="screen" hidden>
+      <div class="hero">
+        <div class="hero-icon">🎉</div>
+        <h1>Course complete!</h1>
+        <p id="done-subtitle" class="subtitle">25 days done. You're a non-smoker now — the pills are finished, the habit is broken. Cravings from here on are just echoes: rare, short, and beatable.</p>
+        <button id="btn-done-reset" class="btn-secondary">Start a new course</button>
+      </div>
+    </section>
+
+    <!-- Guide screen -->
+    <section id="screen-guide" class="screen" hidden>
+      <header class="top">
+        <div>
+          <h1>Guide</h1>
+          <p class="subtitle">Make these 25 days count</p>
+        </div>
+      </header>
+
+      <details class="card guide" open>
+        <summary>🏆 How to do the best possible cure</summary>
+        <ul class="tips">
+          <li><strong>Respect the schedule.</strong> Cytisine works by keeping your nicotine receptors occupied — skipped pills leave the door open for cravings. Log every pill here.</li>
+          <li><strong>Quit fully by day 5.</strong> The course is built around it. Smoking on cytisine past day 5 feels bad (nausea) and undermines the receptor blockade.</li>
+          <li><strong>Take pills with a glass of water</strong>, ideally not on an empty stomach — it prevents most of the nausea.</li>
+          <li><strong>Break your trigger routines for 2 weeks.</strong> Coffee in a different spot, different break routine at work, no alcohol the first week if drinking = smoking for you.</li>
+          <li><strong>Plan your hands and mouth.</strong> Chewing gum, toothpicks, a water bottle, fidget object — the gesture is half the addiction.</li>
+          <li><strong>Snack smart.</strong> Nicotine was suppressing your appetite. Have fruit and nuts ready so you don't swap cigarettes for sugar.</li>
+          <li><strong>Tell people.</strong> Announce your quit day to friends/family. Social accountability measurably improves success rates.</li>
+          <li><strong>Make the money visible.</strong> Put your daily cigarette budget in a jar or a dedicated savings note. It compounds fast.</li>
+          <li><strong>A slip is not a relapse.</strong> If you smoke one, drop it, don't buy a pack, and continue the course. All-or-nothing thinking is the relapse engine.</li>
+        </ul>
+      </details>
+
+      <details class="card guide">
+        <summary>🏃 Sport — your best craving killer</summary>
+        <ul class="tips">
+          <li>Even <strong>10–15 minutes of brisk walking</strong> measurably reduces craving intensity and withdrawal symptoms — it's the closest thing to a free dose of relief.</li>
+          <li>Exercise gives you the <strong>dopamine hit</strong> your brain used to get from nicotine, but with better mood regulation and no crash.</li>
+          <li>Your <strong>cardio improves within 2 weeks</strong> of quitting — lung function starts recovering and oxygen transport improves as carbon monoxide leaves your blood. Training feels noticeably easier, which is very motivating.</li>
+          <li>Schedule workouts at your <strong>former smoking peak times</strong> (after work, after meals) — it rewrites the habit slot.</li>
+          <li>It also counters the two classic quitting worries: <strong>weight gain and stress</strong>.</li>
+        </ul>
+      </details>
+
+      <details class="card guide">
+        <summary>😴 Sleep, coffee & side effects</summary>
+        <ul class="tips">
+          <li><strong>Vivid dreams and lighter sleep</strong> are common the first week (both from cytisine and from nicotine withdrawal). It normalizes — and then your sleep gets <em>better</em> than when you smoked: nicotine was fragmenting it all along.</li>
+          <li><strong>Halve your caffeine.</strong> Smoking doubles how fast you burn caffeine — quit, and your usual coffee suddenly hits twice as hard. That "withdrawal anxiety and insomnia" is often just over-caffeination. No coffee after ~14:00 the first two weeks.</li>
+          <li><strong>Mild nausea, dry mouth, headaches</strong> in the first days are the most common cytisine side effects and usually pass. Water + food with pills helps.</li>
+          <li>Feeling <strong>foggy or irritable days 5–8</strong> is withdrawal, not the pills — it peaks around 72h smoke-free and then fades.</li>
+          <li>If you get <strong>severe symptoms</strong> (chest pain, vomiting, allergic reaction), stop and see a doctor.</li>
+        </ul>
+      </details>
+
+      <details class="card guide">
+        <summary>✅ What quitting nicotine gives you</summary>
+        <ul class="tips timeline">
+          <li><strong>20 minutes:</strong> heart rate and blood pressure drop back down.</li>
+          <li><strong>24–48 h:</strong> carbon monoxide is out of your blood; smell and taste start returning.</li>
+          <li><strong>72 h:</strong> breathing is easier; bronchial tubes relax. This is also the withdrawal peak — it's downhill after this.</li>
+          <li><strong>2–12 weeks:</strong> circulation and lung function improve; exercise feels easier.</li>
+          <li><strong>3–9 months:</strong> coughing and shortness of breath fade; lung cilia regrow and clean house.</li>
+          <li><strong>1 year:</strong> risk of coronary heart disease is half that of a smoker.</li>
+          <li><strong>Mental health:</strong> despite the "smoking relaxes me" myth, studies show anxiety and depression scores <em>improve</em> after quitting — the "relief" of a cigarette was just relief from its own withdrawal.</li>
+          <li><strong>Money:</strong> a pack a day in France is ~€12 — that's <strong>~€4,400/year</strong> back in your pocket.</li>
+          <li><strong>Daily life:</strong> better skin, whiter teeth, no smell, no planning life around the next smoke break.</li>
+        </ul>
+      </details>
+
+      <details class="card guide">
+        <summary>⚠️ Why not just switch to vaping</summary>
+        <ul class="tips">
+          <li><strong>It keeps the addiction alive.</strong> Nicotine is the dependence, whatever the delivery device. Vaping after this course re-occupies the very receptors cytisine just freed — you'd be redoing the withdrawal later, from scratch.</li>
+          <li><strong>Nicotine itself isn't neutral:</strong> it raises heart rate and blood pressure, disrupts sleep, and drives the anxiety rollercoaster between doses.</li>
+          <li><strong>Modern vapes often deliver more nicotine than cigarettes</strong> — nicotine salts make high doses smooth to inhale, so dependence can end up stronger, with all-day grazing instead of discrete cigarettes.</li>
+          <li><strong>Long-term lung effects are unknown</strong> — vaping is very likely less harmful than smoking, but "less harmful than cigarettes" is a very low bar, and flavorings/aerosols are not proven safe to inhale for decades.</li>
+          <li><strong>Dual-use trap:</strong> many people who "switch" end up both vaping and smoking within a year — the vape maintains dependence, and a stressful day reopens the cigarette door.</li>
+          <li><strong>Cost creep:</strong> disposables and pods quietly reach smoking-level spending.</li>
+          <li>You're doing the hard part <em>right now</em>. Finishing nicotine-free means never having to do this again.</li>
+        </ul>
+      </details>
+
+      <details class="card guide">
+        <summary>📚 Articles & testimonies</summary>
+        <div class="links-block">
+          <p class="links-label">Science & articles</p>
+          <ul class="links">
+            <li><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1407764" target="_blank" rel="noopener">NEJM — Cytisine versus Nicotine for Smoking Cessation</a> (cytisine beat nicotine patches in a 1,310-person trial)</li>
+            <li><a href="https://www.massgeneral.org/news/press-release/first-large-us-clinical-trial-of-cytisinicline-finds-the-smoking-cessation-medication-effective-and-well-tolerated" target="_blank" rel="noopener">Mass General — first large US trial (ORCA-2)</a> (32.6% abstinent vs 7% placebo, well tolerated)</li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9668543/" target="_blank" rel="noopener">Cochrane review — nicotine receptor partial agonists</a> (the gold-standard evidence summary)</li>
+            <li><a href="https://www.healthline.com/health-news/drug-works-better-than-nicotine-patches-to-help-smokers-quit-121714" target="_blank" rel="noopener">Healthline — "Drug works better than nicotine patches"</a> (accessible summary)</li>
+            <li><a href="https://www.euronews.com/health/2026/04/02/quitting-smoking-cytisine-can-help-and-other-tips" target="_blank" rel="noopener">Euronews — Quitting smoking: cytisine can help, and other tips</a></li>
+          </ul>
+          <p class="links-label">Reddit testimonies</p>
+          <ul class="links">
+            <li><a href="https://www.reddit.com/r/stopsmoking/search/?q=cytisine%20OR%20tabex%20OR%20desmoxan&restrict_sr=1" target="_blank" rel="noopener">r/stopsmoking — cytisine/Tabex/Desmoxan threads</a></li>
+            <li><a href="https://www.reddit.com/r/quittingsmoking/search/?q=cytisine%20OR%20tabex&restrict_sr=1" target="_blank" rel="noopener">r/quittingsmoking — cytisine experiences</a></li>
+            <li><a href="https://www.reddit.com/r/stopsmoking/" target="_blank" rel="noopener">r/stopsmoking</a> — the big quitting community (daily support threads)</li>
+            <li><a href="https://www.reddit.com/r/QuitVaping/" target="_blank" rel="noopener">r/QuitVaping</a> — if vaping is (or becomes) the temptation</li>
+          </ul>
+        </div>
+      </details>
+
+      <p class="disclaimer">General wellness information, not medical advice.</p>
+    </section>
+
+    <!-- Bottom tab bar -->
+    <nav id="tabbar" class="tabbar" hidden>
+      <button id="btn-tab-today" class="tab active">💊 Today</button>
+      <button id="btn-tab-guide" class="tab">📖 Guide</button>
+    </nav>
+
+    <!-- Settings dialog -->
+    <dialog id="settings-dialog">
+      <form id="settings-form" method="dialog" class="card">
+        <div class="dialog-head">
+          <h2>Settings</h2>
+          <button type="button" id="btn-close-settings" class="btn-icon" aria-label="Close">✕</button>
+        </div>
+        <label for="edit-start">Course start (first pill)</label>
+        <input type="datetime-local" id="edit-start" required>
+        <label for="edit-wake">First pill of the day</label>
+        <input type="time" id="edit-wake" required>
+        <label for="edit-timefmt">Time format</label>
+        <select id="edit-timefmt">
+          <option value="auto">Automatic (device setting)</option>
+          <option value="24">24-hour — 18:00</option>
+          <option value="12">12-hour — 6:00 PM</option>
+        </select>
+        <label for="edit-mode">Course length</label>
+        <select id="edit-mode">
+          <option value="25">Standard — 25 days</option>
+          <option value="75">Extended maintenance — 75 days</option>
+        </select>
+        <button type="button" id="btn-export" class="btn-secondary">📋 Copy backup (start + pill log)</button>
+        <div class="dialog-actions">
+          <button type="button" id="btn-reset" class="btn-danger">Reset course</button>
+          <button type="submit" class="btn-primary">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
