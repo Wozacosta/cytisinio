@@ -101,6 +101,19 @@
       </div>
 
       <div class="card">
+        <p class="card-label">How do you feel today?</p>
+        <div id="mood-picker" class="mood-picker"></div>
+      </div>
+
+      <div class="card">
+        <p class="card-label">Cravings · <span id="craving-count"></span></p>
+        <button type="button" id="btn-craving" class="btn-secondary btn-craving">🌫️ I have a craving</button>
+        <div id="craving-triggers" class="chips" hidden></div>
+        <ul id="today-cravings" class="craving-list"></ul>
+        <p class="hint">Logging cravings reveals your patterns over time. A craving passes in 3–5 minutes whether you smoke or not — breathe, drink water, move.</p>
+      </div>
+
+      <div class="card">
         <p class="card-label">What to expect today</p>
         <p id="day-guidance"></p>
       </div>
@@ -130,6 +143,43 @@
         <h1>Course complete!</h1>
         <p id="done-subtitle" class="subtitle">25 days done. You're a non-smoker now — the pills are finished, the habit is broken. Cravings from here on are just echoes: rare, short, and beatable.</p>
         <button id="btn-done-reset" class="btn-secondary">Start a new course</button>
+      </div>
+    </section>
+
+    <!-- Calendar / journey screen -->
+    <section id="screen-calendar" class="screen" hidden>
+      <header class="top">
+        <div>
+          <h1>Journey</h1>
+          <p class="subtitle">Your course, day by day</p>
+        </div>
+      </header>
+
+      <div class="card">
+        <div id="cal-stats" class="cal-stats"></div>
+      </div>
+
+      <div class="card">
+        <p class="card-label">Calendar · tap a day for details</p>
+        <div id="cal-grid" class="cal-grid"></div>
+        <div class="cal-legend">
+          <span><i class="lg-dot lg-full"></i> all pills</span>
+          <span><i class="lg-dot lg-partial"></i> some</span>
+          <span><i class="lg-dot lg-missed"></i> none</span>
+          <span>😐 mood · <b class="lg-cv">3</b> cravings</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-label">Mood over time</p>
+        <div id="mood-chart" class="mood-chart"></div>
+        <p id="mood-chart-empty" class="hint" hidden>Log your mood each day and a trend line appears here.</p>
+      </div>
+
+      <div class="card">
+        <p class="card-label">Craving triggers</p>
+        <ul id="trigger-breakdown" class="trigger-breakdown"></ul>
+        <p id="trigger-empty" class="hint" hidden>No cravings logged yet — tag them on the Today tab to see what sets them off.</p>
       </div>
     </section>
 
@@ -234,6 +284,7 @@
     <!-- Bottom tab bar -->
     <nav id="tabbar" class="tabbar" hidden>
       <button id="btn-tab-today" class="tab active">💊 Today</button>
+      <button id="btn-tab-calendar" class="tab">📅 Journey</button>
       <button id="btn-tab-guide" class="tab">📖 Guide</button>
     </nav>
 
@@ -259,12 +310,24 @@
           <option value="25">Standard — 25 days</option>
           <option value="75">Extended maintenance — 75 days</option>
         </select>
-        <button type="button" id="btn-export" class="btn-secondary">📋 Copy backup (start + pill log)</button>
+        <button type="button" id="btn-export" class="btn-secondary">📋 Copy backup (pills, cravings, mood)</button>
         <div class="dialog-actions">
           <button type="button" id="btn-reset" class="btn-danger">Reset course</button>
           <button type="submit" class="btn-primary">Save</button>
         </div>
       </form>
+    </dialog>
+
+    <!-- Day detail dialog -->
+    <dialog id="day-dialog">
+      <div class="card">
+        <div class="dialog-head">
+          <h2 id="day-dialog-title">Day</h2>
+          <button type="button" id="btn-close-day" class="btn-icon" aria-label="Close">✕</button>
+        </div>
+        <p id="day-dialog-date" class="hint"></p>
+        <div id="day-dialog-body"></div>
+      </div>
     </dialog>
 
   </main>

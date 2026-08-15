@@ -259,3 +259,139 @@ dialog h2 { font-size: 18px; }
 .dialog-head .btn-icon { background: var(--card-2); font-size: 15px; line-height: 1; }
 .dialog-actions { display: flex; gap: 10px; margin-top: 8px; }
 .dialog-actions .btn-primary { flex: 1; }
+
+/* Mood picker */
+.mood-picker { display: flex; gap: 8px; }
+.mood-btn {
+  flex: 1;
+  background: var(--card-2);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 10px 0 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.1s ease;
+}
+.mood-btn:active { transform: scale(0.94); }
+.mood-btn .mood-emoji { font-size: 24px; line-height: 1; filter: grayscale(0.5) opacity(0.7); }
+.mood-btn .mood-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.mood-btn.selected { border-color: var(--accent); background: var(--accent-dim); }
+.mood-btn.selected .mood-emoji { filter: none; }
+.mood-btn.selected .mood-lbl { color: var(--text); }
+
+/* Craving chips */
+.btn-craving { margin-top: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  background: var(--card-2);
+  border: 1px solid #2a3f38;
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 14px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.chip:active { transform: scale(0.96); }
+.chip.plain { color: var(--muted); }
+
+.craving-list { list-style: none; display: flex; flex-direction: column; }
+.craving-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--card-2);
+}
+.craving-list li:last-child { border-bottom: none; }
+.craving-list .cv-when { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.craving-list .cv-trigger { flex: 1; }
+.craving-list .link-btn { margin-left: auto; }
+
+/* Calendar / journey */
+.cal-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.stat { background: var(--card-2); border-radius: 12px; padding: 12px 14px; }
+.stat .stat-val { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.stat .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-cell {
+  aspect-ratio: 1;
+  background: var(--card-2);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 3px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.cal-cell .cc-day { font-size: 11px; color: var(--muted); font-weight: 600; }
+.cal-cell .cc-mood { font-size: 15px; line-height: 1; }
+.cal-cell .cc-dose { font-size: 9.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cal-cell.full { background: var(--accent-dim); }
+.cal-cell.full .cc-dose, .cal-cell.full .cc-day { color: var(--text); }
+.cal-cell.partial { border-color: var(--warn); }
+.cal-cell.missed { border-color: var(--danger); opacity: 0.9; }
+.cal-cell.future { opacity: 0.38; cursor: default; }
+.cal-cell.today { outline: 2px solid var(--accent); outline-offset: -1px; }
+.cal-cell.quit::before {
+  content: "🚭";
+  position: absolute;
+  bottom: 1px;
+  left: 3px;
+  font-size: 9px;
+}
+.cc-craving {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  background: var(--danger);
+  color: #2a0f0a;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+.cal-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.cal-legend span { display: flex; align-items: center; gap: 5px; }
+.cal-legend .lg-cv { color: var(--danger); font-weight: 700; }
+.lg-dot { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.lg-dot.lg-full { background: var(--accent-dim); }
+.lg-dot.lg-partial { border: 1px solid var(--warn); }
+.lg-dot.lg-missed { border: 1px solid var(--danger); }
+
+/* Mood chart */
+.mood-chart { display: flex; align-items: flex-end; gap: 3px; height: 72px; }
+.mood-chart .mc-bar {
+  flex: 1;
+  min-width: 3px;
+  background: var(--accent-dim);
+  border-radius: 3px 3px 0 0;
+  min-height: 3px;
+}
+.mood-chart .mc-bar.empty { background: var(--card-2); }
+
+/* Trigger breakdown */
+.trigger-breakdown { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.trigger-breakdown li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.trigger-breakdown .tb-label { width: 90px; color: var(--muted); }
+.trigger-breakdown .tb-bar { flex: 1; height: 8px; background: var(--card-2); border-radius: 4px; overflow: hidden; }
+.trigger-breakdown .tb-fill { height: 100%; background: var(--danger); border-radius: 4px; }
+.trigger-breakdown .tb-count { width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Day detail dialog */
+#day-dialog-body { display: flex; flex-direction: column; gap: 16px; }
+.dd-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+.dd-empty { color: var(--muted); font-size: 14px; }
