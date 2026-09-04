@@ -293,6 +293,10 @@ function updateCloudUI(message, tone) {
   const enable = document.getElementById("btn-cloud-enable");
   const sync = document.getElementById("btn-cloud-sync");
   const disable = document.getElementById("btn-cloud-disable");
+  const home = document.getElementById("btn-home-cloud");
+  const homeTitle = document.getElementById("home-cloud-title");
+  const homeDescription = document.getElementById("home-cloud-description");
+  const homeBadge = document.getElementById("home-cloud-badge");
   if (!status || !dot || !enable || !sync || !disable) return;
 
   const cloud = window.cytisinioCloud;
@@ -315,6 +319,31 @@ function updateCloudUI(message, tone) {
   enable.disabled = cloudBusy || !cloud;
   sync.disabled = cloudBusy;
   disable.disabled = cloudBusy;
+
+  if (home && homeTitle && homeDescription && homeBadge) {
+    home.disabled = cloudBusy || !cloud;
+    if (!cloud) {
+      homeTitle.textContent = "Cloud restore unavailable";
+      homeDescription.textContent = "You can still start a course and use a manual backup file.";
+      homeBadge.textContent = "Offline";
+    } else if (cloudBusy) {
+      homeTitle.textContent = "Checking your backup…";
+      homeDescription.textContent = "Keep this page open for a moment.";
+      homeBadge.textContent = "Working";
+    } else if (enabled && user.isLoggedIn) {
+      homeTitle.textContent = "Cloud backup connected";
+      homeDescription.textContent = "Your private backup is ready on this device.";
+      homeBadge.textContent = "Connected";
+    } else if (enabled) {
+      homeTitle.textContent = "Resume cloud backup";
+      homeDescription.textContent = "Sign in again to restore your private backup.";
+      homeBadge.textContent = "Paused";
+    } else {
+      homeTitle.textContent = "Restore from cloud";
+      homeDescription.textContent = "Already used Cytisinio? Bring your private backup to this device.";
+      homeBadge.textContent = "Optional";
+    }
+  }
 }
 
 async function saveCloudBackup() {
@@ -366,7 +395,11 @@ async function reconcileCloudBackup({ firstConnect = false } = {}) {
     const meta = cloudMeta();
 
     if (!remote) {
-      await saveCloudBackup();
+      if (state) await saveCloudBackup();
+      else {
+        updateCloudUI("No cloud backup found for this account");
+        if (firstConnect) alert("No Cytisinio backup was found for this account. You can start a new course below.");
+      }
       return;
     }
 
@@ -399,6 +432,38 @@ async function reconcileCloudBackup({ firstConnect = false } = {}) {
   } finally {
     cloudBusy = false;
     cloudReconciling = false;
+  }
+}
+
+async function connectCloudBackup() {
+  const cloud = window.cytisinioCloud;
+  if (!cloud || cloudBusy) return;
+
+  if (!cloudEnabled()) {
+    const accepted = confirm(
+      "Enable private cloud backup?\n\nYour course and journey data will be sent to Dexie Cloud and linked to the email account you sign in with. Cytisinio will keep working offline, and you can disconnect at any time."
+    );
+    if (!accepted) return;
+  }
+
+  try {
+    cloudBusy = true;
+    cloudConnecting = true;
+    updateCloudUI("Waiting for email sign-in…", "busy");
+    const user = cloud.getUser().isLoggedIn ? cloud.getUser() : await cloud.login();
+    if (!user.isLoggedIn) throw new Error("Sign-in was not completed.");
+    localStorage.setItem(CLOUD_ENABLED_KEY, "1");
+    await reconcileCloudBackup({ firstConnect: cloudMeta().userId !== user.userId });
+  } catch (error) {
+    if (!cloud.getUser().isLoggedIn) localStorage.removeItem(CLOUD_ENABLED_KEY);
+    updateCloudUI(
+      error && error.name === "AbortError" ? "Cloud backup remains off" : "Sign-in was not completed · device data is safe",
+      error && error.name === "AbortError" ? "" : "error"
+    );
+  } finally {
+    cloudBusy = false;
+    cloudConnecting = false;
+    updateCloudUI();
   }
 }
 
@@ -1294,8 +1359,8 @@ document.getElementById("btn-export").addEventListener("click", (e) => {
     link.removeAttribute("download");
   }, 1000);
 
-  link.textContent = "✅ Backup downloaded";
-  setTimeout(() => (link.textContent = "⬇️ Download backup file"), 2000);
+  link.textContent = "✓ Downloaded";
+  setTimeout(() => (link.innerHTML = '<span aria-hidden="true">↓</span> Download'), 2000);
 });
 
 document.getElementById("backup-import").addEventListener("change", async (e) => {
@@ -1318,37 +1383,8 @@ document.getElementById("backup-import").addEventListener("change", async (e) =>
   }
 });
 
-document.getElementById("btn-cloud-enable").addEventListener("click", async () => {
-  const cloud = window.cytisinioCloud;
-  if (!cloud || cloudBusy) return;
-
-  if (!cloudEnabled()) {
-    const accepted = confirm(
-      "Enable private cloud backup?\n\nYour course and journey data will be sent to Dexie Cloud and linked to the email account you sign in with. Cytisinio will keep working offline, and you can disconnect at any time."
-    );
-    if (!accepted) return;
-  }
-
-  try {
-    cloudBusy = true;
-    cloudConnecting = true;
-    updateCloudUI("Waiting for email sign-in…", "busy");
-    const user = await cloud.login();
-    if (!user.isLoggedIn) throw new Error("Sign-in was not completed.");
-    localStorage.setItem(CLOUD_ENABLED_KEY, "1");
-    await reconcileCloudBackup({ firstConnect: cloudMeta().userId !== user.userId });
-  } catch (error) {
-    if (!cloud.getUser().isLoggedIn) localStorage.removeItem(CLOUD_ENABLED_KEY);
-    updateCloudUI(
-      error && error.name === "AbortError" ? "Cloud backup remains off" : "Sign-in was not completed · device data is safe",
-      error && error.name === "AbortError" ? "" : "error"
-    );
-  } finally {
-    cloudBusy = false;
-    cloudConnecting = false;
-    updateCloudUI();
-  }
-});
+document.getElementById("btn-cloud-enable").addEventListener("click", connectCloudBackup);
+document.getElementById("btn-home-cloud").addEventListener("click", connectCloudBackup);
 
 document.getElementById("btn-cloud-sync").addEventListener("click", async () => {
   await reconcileCloudBackup();

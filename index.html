@@ -31,6 +31,18 @@
         <p class="subtitle">Your 25-day cytisine course companion<br>(Desmoxan · Recigar · Tabex · Dextasine)</p>
       </div>
 
+      <button type="button" id="btn-home-cloud" class="home-cloud-cta">
+        <span class="home-cloud-icon" aria-hidden="true">☁️</span>
+        <span class="home-cloud-copy">
+          <strong id="home-cloud-title">Restore from cloud</strong>
+          <span id="home-cloud-description">Already used Cytisinio? Bring your private backup to this device.</span>
+        </span>
+        <span id="home-cloud-badge" class="home-cloud-badge">Optional</span>
+        <span class="home-cloud-arrow" aria-hidden="true">›</span>
+      </button>
+
+      <div class="section-divider"><span>or start a new course</span></div>
+
       <form id="setup-form" class="card">
         <label for="start-datetime">When did you take (or will you take) your first pill?</label>
         <input type="datetime-local" id="start-datetime" required>
@@ -344,57 +356,91 @@
 
     <!-- Settings dialog -->
     <dialog id="settings-dialog">
-      <form id="settings-form" method="dialog" class="card">
-        <div class="dialog-head">
-          <h2>Settings</h2>
+      <form id="settings-form" method="dialog" class="card settings-card">
+        <div class="dialog-head settings-toolbar">
+          <div>
+            <p class="settings-eyebrow">Cytisinio</p>
+            <h2>Settings</h2>
+          </div>
           <button type="button" id="btn-close-settings" class="btn-icon" aria-label="Close">✕</button>
         </div>
-        <label for="edit-start">Course start (first pill)</label>
-        <input type="datetime-local" id="edit-start" required>
-        <label for="edit-wake">First pill of the day</label>
-        <input type="time" id="edit-wake" required>
-        <label for="edit-timefmt">Time format</label>
-        <select id="edit-timefmt">
-          <option value="auto">Automatic (device setting)</option>
-          <option value="24">24-hour — 18:00</option>
-          <option value="12">12-hour — 6:00 PM</option>
-        </select>
-        <label for="edit-mode">Course length</label>
-        <select id="edit-mode">
-          <option value="25">Standard — 25 days</option>
-          <option value="75">Extended maintenance — 75 days</option>
-        </select>
-        <label for="edit-nicotine-product">Nicotine product</label>
-        <select id="edit-nicotine-product">
-          <option value="cigarettes">Cigarettes</option>
-          <option value="pouches">Nicotine pouches</option>
-          <option value="vape">Vaping</option>
-          <option value="other">Another nicotine product</option>
-        </select>
-        <label for="edit-nicotine-baseline">Typical uses per day</label>
-        <input type="number" id="edit-nicotine-baseline" min="1" max="200" inputmode="numeric" placeholder="For example: 8">
+
+        <section class="settings-section" aria-labelledby="settings-course-title">
+          <div class="settings-section-head">
+            <p id="settings-course-title" class="settings-section-title">Course</p>
+            <span>Schedule and tracking</span>
+          </div>
+          <div class="settings-fields">
+            <div class="settings-field settings-field-wide">
+              <label for="edit-start">Course start (first pill)</label>
+              <input type="datetime-local" id="edit-start" required>
+            </div>
+            <div class="settings-field">
+              <label for="edit-wake">First pill of the day</label>
+              <input type="time" id="edit-wake" required>
+            </div>
+            <div class="settings-field">
+              <label for="edit-timefmt">Time format</label>
+              <select id="edit-timefmt">
+                <option value="auto">Automatic</option>
+                <option value="24">24-hour — 18:00</option>
+                <option value="12">12-hour — 6:00 PM</option>
+              </select>
+            </div>
+            <div class="settings-field">
+              <label for="edit-mode">Course length</label>
+              <select id="edit-mode">
+                <option value="25">Standard — 25 days</option>
+                <option value="75">Extended — 75 days</option>
+              </select>
+            </div>
+            <div class="settings-field">
+              <label for="edit-nicotine-product">Nicotine product</label>
+              <select id="edit-nicotine-product">
+                <option value="cigarettes">Cigarettes</option>
+                <option value="pouches">Nicotine pouches</option>
+                <option value="vape">Vaping</option>
+                <option value="other">Another product</option>
+              </select>
+            </div>
+            <div class="settings-field settings-field-wide">
+              <label for="edit-nicotine-baseline">Typical uses per day <span>optional</span></label>
+              <input type="number" id="edit-nicotine-baseline" min="1" max="200" inputmode="numeric" placeholder="For example: 8">
+            </div>
+          </div>
+        </section>
+
         <section class="cloud-backup" aria-labelledby="cloud-backup-title">
           <div class="cloud-backup-head">
+            <span class="cloud-backup-icon" aria-hidden="true">☁️</span>
             <div>
-              <p id="cloud-backup-title" class="card-label">☁️ Cloud backup</p>
+              <p id="cloud-backup-title" class="settings-section-title">Cloud backup</p>
               <p id="cloud-status" class="cloud-status" role="status">Checking availability…</p>
             </div>
             <span id="cloud-dot" class="cloud-dot" aria-hidden="true"></span>
           </div>
-          <p class="hint">Optional. Sign in by email code to privately sync this device's course, pills, nicotine uses, cravings, and moods through Dexie Cloud. The app remains fully usable offline.</p>
+          <p class="cloud-description">Keep your progress safe and bring it to another device. Sign in with a one-time email code; Cytisinio still works fully offline.</p>
           <div class="cloud-actions">
-            <button type="button" id="btn-cloud-enable" class="btn-secondary">Enable cloud backup</button>
+            <button type="button" id="btn-cloud-enable" class="btn-primary btn-cloud-primary">Enable cloud backup</button>
             <button type="button" id="btn-cloud-sync" class="btn-secondary" hidden>Sync now</button>
             <button type="button" id="btn-cloud-disable" class="btn-link-danger" hidden>Disconnect</button>
           </div>
         </section>
-        <div class="backup-actions">
-          <a id="btn-export" class="btn-secondary backup-download" href="#">⬇️ Download backup file</a>
-          <label for="backup-import" class="btn-secondary backup-import-label">⬆️ Restore backup file</label>
-          <input type="file" id="backup-import" accept="application/json,.json" hidden>
-        </div>
-        <p class="hint">Backups include your course, pills, nicotine uses, cravings, and moods. The file stays under your control.</p>
-        <div class="dialog-actions">
+
+        <section class="settings-section manual-backup" aria-labelledby="manual-backup-title">
+          <div class="settings-section-head">
+            <p id="manual-backup-title" class="settings-section-title">Manual backup</p>
+            <span>JSON file</span>
+          </div>
+          <p class="hint">Download a portable copy or restore one you already have. The file stays under your control.</p>
+          <div class="backup-actions">
+            <a id="btn-export" class="btn-secondary backup-download" href="#"><span aria-hidden="true">↓</span> Download</a>
+            <label for="backup-import" class="btn-secondary backup-import-label"><span aria-hidden="true">↑</span> Restore</label>
+            <input type="file" id="backup-import" accept="application/json,.json" hidden>
+          </div>
+        </section>
+
+        <div class="dialog-actions settings-footer">
           <button type="button" id="btn-reset" class="btn-danger">Reset course</button>
           <button type="submit" class="btn-primary">Save</button>
         </div>
