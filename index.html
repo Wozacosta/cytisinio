@@ -96,7 +96,13 @@
           <h1 id="day-title">Day 1 of 25</h1>
           <p id="phase-label" class="subtitle"></p>
         </div>
-        <button id="btn-settings" class="btn-icon" aria-label="Settings">⚙️</button>
+        <div class="top-actions">
+          <button type="button" class="cloud-account-trigger" hidden>
+            <span class="cloud-account-dot" aria-hidden="true"></span>
+            <span class="cloud-account-label">Signed in</span>
+          </button>
+          <button id="btn-settings" class="btn-icon" aria-label="Settings">⚙️</button>
+        </div>
       </header>
 
       <div id="quit-banner" class="banner" hidden></div>
@@ -175,6 +181,12 @@
 
     <!-- Future start screen -->
     <section id="screen-future" class="screen" hidden>
+      <div class="standalone-actions">
+        <button type="button" class="cloud-account-trigger" hidden>
+          <span class="cloud-account-dot" aria-hidden="true"></span>
+          <span class="cloud-account-label">Signed in</span>
+        </button>
+      </div>
       <div class="hero">
         <div class="hero-icon">📅</div>
         <h1>Not started yet</h1>
@@ -185,6 +197,12 @@
 
     <!-- Completed screen -->
     <section id="screen-done" class="screen" hidden>
+      <div class="standalone-actions">
+        <button type="button" class="cloud-account-trigger" hidden>
+          <span class="cloud-account-dot" aria-hidden="true"></span>
+          <span class="cloud-account-label">Signed in</span>
+        </button>
+      </div>
       <div class="hero">
         <div class="hero-icon">🎉</div>
         <h1>Course complete!</h1>
@@ -200,6 +218,10 @@
           <h1>Journey</h1>
           <p class="subtitle">Your course, day by day</p>
         </div>
+        <button type="button" class="cloud-account-trigger" hidden>
+          <span class="cloud-account-dot" aria-hidden="true"></span>
+          <span class="cloud-account-label">Signed in</span>
+        </button>
       </header>
 
       <div class="card">
@@ -237,6 +259,10 @@
           <h1>Guide</h1>
           <p class="subtitle">Make these 25 days count</p>
         </div>
+        <button type="button" class="cloud-account-trigger" hidden>
+          <span class="cloud-account-dot" aria-hidden="true"></span>
+          <span class="cloud-account-label">Signed in</span>
+        </button>
       </header>
 
       <div class="card privacy-card">

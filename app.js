@@ -297,6 +297,7 @@ function updateCloudUI(message, tone) {
   const homeTitle = document.getElementById("home-cloud-title");
   const homeDescription = document.getElementById("home-cloud-description");
   const homeBadge = document.getElementById("home-cloud-badge");
+  const accountTriggers = document.querySelectorAll(".cloud-account-trigger");
   if (!status || !dot || !enable || !sync || !disable) return;
 
   const cloud = window.cytisinioCloud;
@@ -344,6 +345,19 @@ function updateCloudUI(message, tone) {
       homeBadge.textContent = "Optional";
     }
   }
+
+  accountTriggers.forEach((button) => {
+    const label = button.querySelector(".cloud-account-label");
+    button.hidden = !enabled;
+    button.classList.toggle("paused", enabled && !user.isLoggedIn);
+    button.classList.toggle("syncing", enabled && user.isLoggedIn && cloudBusy);
+    if (label) label.textContent = !user.isLoggedIn ? "Resume cloud" : cloudBusy ? "Syncing" : "Signed in";
+    const accountText = user.isLoggedIn
+      ? `Cloud backup on${user.email ? ` · signed in as ${user.email}` : ""}. Open settings.`
+      : "Cloud backup paused. Open settings to sign in again.";
+    button.setAttribute("aria-label", accountText);
+    button.title = accountText;
+  });
 }
 
 async function saveCloudBackup() {
@@ -1232,6 +1246,9 @@ document.getElementById("btn-tab-guide").addEventListener("click", () => {
 
 document.getElementById("btn-settings").addEventListener("click", openSettings);
 document.getElementById("btn-future-settings").addEventListener("click", openSettings);
+document.querySelectorAll(".cloud-account-trigger").forEach((button) => {
+  button.addEventListener("click", openSettings);
+});
 
 document.getElementById("settings-form").addEventListener("submit", () => {
   const start = document.getElementById("edit-start").value;

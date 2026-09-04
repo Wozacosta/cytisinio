@@ -88,6 +88,31 @@ h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
 .section-divider span { white-space: nowrap; }
 
 .top { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 4px 0; }
+.top-actions { display: flex; align-items: center; gap: 7px; }
+.standalone-actions { display: flex; justify-content: flex-end; padding: 8px 4px 0; }
+.cloud-account-trigger {
+  min-height: 36px;
+  border: 1px solid rgba(79, 209, 165, 0.3);
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(44, 122, 95, 0.18);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cloud-account-trigger[hidden] { display: none; }
+.cloud-account-trigger:hover, .cloud-account-trigger:focus-visible { border-color: var(--accent); }
+.cloud-account-trigger:active { transform: scale(0.97); }
+.cloud-account-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(79, 209, 165, 0.12); }
+.cloud-account-trigger.paused { color: var(--warn); border-color: rgba(224, 183, 106, 0.3); background: rgba(224, 183, 106, 0.08); }
+.cloud-account-trigger.paused .cloud-account-dot { background: var(--warn); box-shadow: 0 0 0 3px rgba(224, 183, 106, 0.1); }
+.cloud-account-trigger.syncing .cloud-account-dot { animation: cloud-pulse 1.1s ease-in-out infinite; }
+@keyframes cloud-pulse { 50% { opacity: 0.35; transform: scale(0.78); } }
 
 .card {
   background: var(--card);
