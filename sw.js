@@ -1,9 +1,10 @@
-const CACHE = "cytisinio-v8";
+const CACHE = "cytisinio-v13";
 const ASSETS = [
   ".",
   "index.html",
   "styles.css",
   "app.js",
+  "cloud-sync.js",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",

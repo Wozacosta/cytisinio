@@ -1,7 +1,7 @@
 {
   "name": "Cytisinio — Cytisine Course Companion",
   "short_name": "Cytisinio",
-  "description": "Pill schedule and daily guidance for the 25-day cytisine quit-smoking course.",
+  "description": "Pill schedule and daily guidance for a cytisine course to quit cigarettes, vaping, or nicotine pouches.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0f1a17",

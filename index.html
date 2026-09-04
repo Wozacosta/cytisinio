@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0f1a17">
-  <meta name="description" content="Cytisine course companion — pill schedule and daily guidance for your 25-day quit plan.">
+  <meta name="description" content="Cytisine course companion — pill schedule and daily guidance for quitting cigarettes, vaping, or nicotine pouches.">
   <title>Cytisinio</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
@@ -13,6 +13,12 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Cytisinio">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
   <main id="app">
@@ -33,6 +39,18 @@
         <input type="time" id="wake-time" value="08:00" required>
         <p class="hint">Daily pill times are spread from this hour. You can change it later.</p>
 
+        <label for="nicotine-product">What are you quitting?</label>
+        <select id="nicotine-product">
+          <option value="cigarettes">Cigarettes</option>
+          <option value="pouches">Nicotine pouches</option>
+          <option value="vape">Vaping</option>
+          <option value="other">Another nicotine product</option>
+        </select>
+
+        <label for="nicotine-baseline">Typical uses per day</label>
+        <input type="number" id="nicotine-baseline" min="1" max="200" inputmode="numeric" placeholder="For example: 8">
+        <p class="hint">Count each cigarette or pouch. For vaping, count sessions rather than puffs. This is for tracking—not a prescribed dose.</p>
+
         <label for="mode-select">Course length</label>
         <select id="mode-select">
           <option value="25">Standard — 25 days (~101 pills)</option>
@@ -52,9 +70,10 @@
           <tr><td>Days 17–20</td><td>1 pill every 5 h</td><td>3/day</td></tr>
           <tr><td>Days 21–25</td><td>1–2 pills a day</td><td>≤2/day</td></tr>
         </table>
-        <p class="hint">You must stop smoking completely by day 5 at the latest.</p>
+        <p class="hint">You must stop all nicotine completely by day 5 at the latest.</p>
       </div>
 
+      <a class="source-link" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">🔍 Open source · inspect how your data is handled</a>
       <p class="disclaimer">This app is a schedule helper, not medical advice. Follow your package leaflet and talk to a doctor or pharmacist if unsure.</p>
     </section>
 
@@ -69,6 +88,21 @@
       </header>
 
       <div id="quit-banner" class="banner" hidden></div>
+
+      <div id="nicotine-card" class="card nicotine-card" hidden>
+        <div class="nicotine-head">
+          <div>
+            <p class="card-label">Nicotine wind-down</p>
+            <p id="nicotine-today" class="nicotine-count"></p>
+          </div>
+          <span id="nicotine-product-badge" class="product-badge"></span>
+        </div>
+        <div class="bar"><div id="nicotine-bar" class="bar-fill nicotine"></div></div>
+        <p id="nicotine-plan" class="nicotine-plan"></p>
+        <button type="button" id="btn-nicotine" class="btn-secondary nicotine-log-btn"></button>
+        <p id="last-nicotine" class="hint last-taken" hidden></p>
+        <p class="hint">There is no official pouch- or vape-specific numerical taper. Track your pattern, reduce during days 1–4, and stop all nicotine by day 5.</p>
+      </div>
 
       <div class="card progress-card">
         <div class="progress-row">
@@ -123,6 +157,7 @@
         <ul id="upcoming" class="upcoming-list"></ul>
       </div>
 
+      <a class="source-link" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">🔍 Privacy & source code on GitHub</a>
       <p class="disclaimer">Schedule helper only — follow your leaflet. Stop and see a doctor if you have chest pain, severe nausea or an allergic reaction.</p>
     </section>
 
@@ -141,7 +176,7 @@
       <div class="hero">
         <div class="hero-icon">🎉</div>
         <h1>Course complete!</h1>
-        <p id="done-subtitle" class="subtitle">25 days done. You're a non-smoker now — the pills are finished, the habit is broken. Cravings from here on are just echoes: rare, short, and beatable.</p>
+        <p id="done-subtitle" class="subtitle">25 days done. You're nicotine-free now — the pills are finished, the habit is broken. Cravings from here on are just echoes: rare, short, and beatable.</p>
         <button id="btn-done-reset" class="btn-secondary">Start a new course</button>
       </div>
     </section>
@@ -192,6 +227,13 @@
         </div>
       </header>
 
+      <div class="card privacy-card">
+        <p class="card-label">🔒 Privacy & open source</p>
+        <p><strong>Your course data stays in this browser by default.</strong> Optional cloud backup is off until you choose to enable it.</p>
+        <p class="hint">If enabled, your journey data is stored privately in your Dexie Cloud account so it can sync across devices. Vercel receives anonymous page-view and performance measurements only. You can inspect every line of the app yourself.</p>
+        <a class="github-button" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">View the source on GitHub ↗</a>
+      </div>
+
       <details class="card guide" open>
         <summary>🏆 How to do the best possible cure</summary>
         <ul class="tips">
@@ -241,6 +283,18 @@
           <li><strong>Mental health:</strong> despite the "smoking relaxes me" myth, studies show anxiety and depression scores <em>improve</em> after quitting — the "relief" of a cigarette was just relief from its own withdrawal.</li>
           <li><strong>Money:</strong> a pack a day in France is ~€12 — that's <strong>~€4,400/year</strong> back in your pocket.</li>
           <li><strong>Daily life:</strong> better skin, whiter teeth, no smell, no planning life around the next smoke break.</li>
+        </ul>
+      </details>
+
+      <details class="card guide">
+        <summary>🟢 Pouches, vapes & other nicotine</summary>
+        <ul class="tips">
+          <li><strong>The finish line is the same:</strong> Desmoxan is intended for permanent cessation of nicotine-containing products, not cigarettes alone. Stop all nicotine no later than day 5.</li>
+          <li><strong>Days 1–4 are a runway, not a formula.</strong> There is no official milligram-by-milligram taper for pouches or vaping. Log each use, avoid increasing, delay the first use, remove automatic uses, and make the gaps longer.</li>
+          <li><strong>Day 4:</strong> remove the remaining supply and prepare substitutes for the mouth-and-hands habit. Day 5 is zero nicotine.</li>
+          <li><strong>Do not compensate</strong> by choosing stronger pouches, leaving them in longer, or vaping more intensely.</li>
+          <li><strong>Watch for too much nicotine effect.</strong> Using nicotine alongside cytisine can worsen effects such as nausea, dizziness, headache, or a racing heartbeat. Ask a pharmacist or clinician if you are unsure.</li>
+          <li><a href="https://www.aflofarm.eu/en/products/otc/desmoxan-tablets/" target="_blank" rel="noopener">Desmoxan product information</a> · <a href="https://www.royalwolverhampton.nhs.uk/wp-content/uploads/2025/07/Cytisine_to_help_you_quit_smoking.pdf" target="_blank" rel="noopener">NHS cytisine FAQ</a></li>
         </ul>
       </details>
 
@@ -310,7 +364,36 @@
           <option value="25">Standard — 25 days</option>
           <option value="75">Extended maintenance — 75 days</option>
         </select>
-        <button type="button" id="btn-export" class="btn-secondary">📋 Copy backup (pills, cravings, mood)</button>
+        <label for="edit-nicotine-product">Nicotine product</label>
+        <select id="edit-nicotine-product">
+          <option value="cigarettes">Cigarettes</option>
+          <option value="pouches">Nicotine pouches</option>
+          <option value="vape">Vaping</option>
+          <option value="other">Another nicotine product</option>
+        </select>
+        <label for="edit-nicotine-baseline">Typical uses per day</label>
+        <input type="number" id="edit-nicotine-baseline" min="1" max="200" inputmode="numeric" placeholder="For example: 8">
+        <section class="cloud-backup" aria-labelledby="cloud-backup-title">
+          <div class="cloud-backup-head">
+            <div>
+              <p id="cloud-backup-title" class="card-label">☁️ Cloud backup</p>
+              <p id="cloud-status" class="cloud-status" role="status">Checking availability…</p>
+            </div>
+            <span id="cloud-dot" class="cloud-dot" aria-hidden="true"></span>
+          </div>
+          <p class="hint">Optional. Sign in by email code to privately sync this device's course, pills, nicotine uses, cravings, and moods through Dexie Cloud. The app remains fully usable offline.</p>
+          <div class="cloud-actions">
+            <button type="button" id="btn-cloud-enable" class="btn-secondary">Enable cloud backup</button>
+            <button type="button" id="btn-cloud-sync" class="btn-secondary" hidden>Sync now</button>
+            <button type="button" id="btn-cloud-disable" class="btn-link-danger" hidden>Disconnect</button>
+          </div>
+        </section>
+        <div class="backup-actions">
+          <a id="btn-export" class="btn-secondary backup-download" href="#">⬇️ Download backup file</a>
+          <label for="backup-import" class="btn-secondary backup-import-label">⬆️ Restore backup file</label>
+          <input type="file" id="backup-import" accept="application/json,.json" hidden>
+        </div>
+        <p class="hint">Backups include your course, pills, nicotine uses, cravings, and moods. The file stays under your control.</p>
         <div class="dialog-actions">
           <button type="button" id="btn-reset" class="btn-danger">Reset course</button>
           <button type="submit" class="btn-primary">Save</button>
@@ -331,6 +414,7 @@
     </dialog>
 
   </main>
+  <script src="cloud-sync.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -14,6 +14,21 @@ const MAINTENANCE_PHASE =
   { from: 26, to: 75, intervalMin: 720, pills: 2, label: "Maintenance — 1 pill every 12 h", short: "every 12 h" };
 const QUIT_DAY = 5;
 
+const NICOTINE_PRODUCTS = {
+  cigarettes: { singular: "cigarette", plural: "cigarettes", badge: "Cigarettes" },
+  pouches: { singular: "pouch", plural: "pouches", badge: "Pouches" },
+  vape: { singular: "vape session", plural: "vape sessions", badge: "Vaping" },
+  other: { singular: "nicotine use", plural: "nicotine uses", badge: "Nicotine" },
+};
+
+const NICOTINE_WIND_DOWN = {
+  1: "Count each use without judgment. Do not increase above your usual pattern.",
+  2: "Delay the first use and skip one of the easiest automatic uses.",
+  3: "Stretch the gaps and make every use deliberate rather than automatic.",
+  4: "Last runway day. Remove your remaining supply and prepare for zero nicotine tomorrow.",
+  5: "Quit day: zero nicotine from today. If you slip, log it without judgment and continue.",
+};
+
 function courseMode() {
   return state && state.mode === "75" ? "75" : "25";
 }
@@ -68,6 +83,9 @@ const MAINTENANCE_GENERIC = [
 ];
 
 function guidanceFor(day) {
+  if (state && state.nicotineProduct && state.nicotineProduct !== "cigarettes" && day <= QUIT_DAY) {
+    return NICOTINE_WIND_DOWN[day] + " Follow the cytisine schedule in your package leaflet.";
+  }
   if (day <= 25) return GUIDANCE[day] || "Keep following the schedule and stay smoke-free.";
   if (MAINTENANCE_GUIDANCE[day]) return MAINTENANCE_GUIDANCE[day];
   return MAINTENANCE_GENERIC[(day - 26) % MAINTENANCE_GENERIC.length];
@@ -85,6 +103,7 @@ function phaseFor(day) {
 // wholesale, and survives course resets — so even if the main state gets
 // clobbered, logged pills are recovered from it on next load.
 const JOURNAL_KEY = "cytisinio-journal";
+const APP_STATE_KEY = "cytisinio";
 
 const journal = {
   load() {
@@ -108,7 +127,7 @@ const journal = {
 const store = {
   load() {
     try {
-      const s = JSON.parse(localStorage.getItem("cytisinio")) || null;
+      const s = JSON.parse(localStorage.getItem(APP_STATE_KEY)) || null;
       if (!s) return null;
       if (!Array.isArray(s.log)) s.log = [];
       // Recover any journal entries from this course that the log is missing
@@ -125,11 +144,13 @@ const store = {
     }
   },
   save(state) {
-    localStorage.setItem("cytisinio", JSON.stringify(state));
+    localStorage.setItem(APP_STATE_KEY, JSON.stringify(state));
+    queueCloudSave();
   },
   clear() {
     // Intentionally leaves the journal in place — pill history is never destroyed.
-    localStorage.removeItem("cytisinio");
+    localStorage.removeItem(APP_STATE_KEY);
+    queueCloudSave();
   },
 };
 
@@ -138,6 +159,7 @@ const store = {
 // pill journal does. clear() never touches them.
 const CRAVINGS_KEY = "cytisinio-cravings";
 const MOODS_KEY = "cytisinio-moods";
+const NICOTINE_USES_KEY = "cytisinio-nicotine-uses";
 
 const CRAVING_TRIGGERS = ["Coffee", "After meal", "Stress", "Alcohol", "Boredom", "Social", "Phone", "Other"];
 
@@ -164,9 +186,36 @@ const cravings = {
     c.push(entry);
     c.sort((a, b) => (a.t < b.t ? -1 : 1));
     localStorage.setItem(CRAVINGS_KEY, JSON.stringify(c));
+    queueCloudSave();
   },
   remove(iso) {
     localStorage.setItem(CRAVINGS_KEY, JSON.stringify(this.load().filter((e) => e.t !== iso)));
+    queueCloudSave();
+  },
+};
+
+const nicotineUses = {
+  load() {
+    try {
+      const entries = JSON.parse(localStorage.getItem(NICOTINE_USES_KEY));
+      return Array.isArray(entries) ? entries : [];
+    } catch {
+      return [];
+    }
+  },
+  add(iso) {
+    const entries = this.load();
+    entries.push(iso);
+    entries.sort();
+    localStorage.setItem(NICOTINE_USES_KEY, JSON.stringify(entries));
+    queueCloudSave();
+  },
+  remove(iso) {
+    const entries = this.load();
+    const index = entries.lastIndexOf(iso);
+    if (index >= 0) entries.splice(index, 1);
+    localStorage.setItem(NICOTINE_USES_KEY, JSON.stringify(entries));
+    queueCloudSave();
   },
 };
 
@@ -186,10 +235,205 @@ const moods = {
     if (score == null) delete m[dayKey];
     else m[dayKey] = score;
     localStorage.setItem(MOODS_KEY, JSON.stringify(m));
+    queueCloudSave();
   },
 };
 
 let state = store.load();
+
+// ---- Optional offline-first Dexie Cloud backup ----
+// localStorage remains the immediate source of truth. Once explicitly enabled,
+// the full portable backup is mirrored to a private Dexie Cloud singleton.
+const CLOUD_ENABLED_KEY = "cytisinio-cloud-enabled";
+const CLOUD_META_KEY = "cytisinio-cloud-meta";
+const CLOUD_DEVICE_KEY = "cytisinio-cloud-device";
+let cloudSaveTimer = null;
+let cloudBusy = false;
+let cloudConnecting = false;
+let cloudReconciling = false;
+let applyingCloudBackup = false;
+let cloudSyncState = null;
+
+function cloudEnabled() {
+  return localStorage.getItem(CLOUD_ENABLED_KEY) === "1";
+}
+
+function cloudDeviceId() {
+  let id = localStorage.getItem(CLOUD_DEVICE_KEY);
+  if (!id) {
+    id = typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `device-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(CLOUD_DEVICE_KEY, id);
+  }
+  return id;
+}
+
+function cloudMeta() {
+  try {
+    return JSON.parse(localStorage.getItem(CLOUD_META_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
+function setCloudMeta(next) {
+  localStorage.setItem(CLOUD_META_KEY, JSON.stringify({ ...cloudMeta(), ...next }));
+}
+
+function queueCloudSave() {
+  if (applyingCloudBackup || !cloudEnabled() || !window.cytisinioCloud) return;
+  clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = setTimeout(() => saveCloudBackup(), 650);
+}
+
+function updateCloudUI(message, tone) {
+  const status = document.getElementById("cloud-status");
+  const dot = document.getElementById("cloud-dot");
+  const enable = document.getElementById("btn-cloud-enable");
+  const sync = document.getElementById("btn-cloud-sync");
+  const disable = document.getElementById("btn-cloud-disable");
+  if (!status || !dot || !enable || !sync || !disable) return;
+
+  const cloud = window.cytisinioCloud;
+  const user = cloud ? cloud.getUser() : { isLoggedIn: false };
+  const enabled = cloudEnabled();
+  status.textContent = message || (
+    !cloud
+      ? "Unavailable · manual backup still works"
+      : !enabled
+        ? "Off · data stays only on this device"
+        : !user.isLoggedIn
+          ? "Paused · sign in to resume syncing"
+          : `Private sync on${user.email ? ` · ${user.email}` : ""}`
+  );
+  dot.className = `cloud-dot${tone ? ` ${tone}` : enabled && user.isLoggedIn ? " on" : ""}`;
+  enable.hidden = enabled && user.isLoggedIn;
+  enable.textContent = enabled ? "Sign in to resume" : "Enable cloud backup";
+  sync.hidden = !(enabled && user.isLoggedIn);
+  disable.hidden = !enabled;
+  enable.disabled = cloudBusy || !cloud;
+  sync.disabled = cloudBusy;
+  disable.disabled = cloudBusy;
+}
+
+async function saveCloudBackup() {
+  const cloud = window.cytisinioCloud;
+  if (!cloudEnabled() || !cloud || !cloud.getUser().isLoggedIn || applyingCloudBackup) return;
+  try {
+    cloudBusy = true;
+    updateCloudUI("Saving locally, then syncing…", "busy");
+    const record = await cloud.save(createBackup(), cloudDeviceId());
+    const user = cloud.getUser();
+    setCloudMeta({ userId: user.userId, lastAppliedAt: record.updatedAt });
+    updateCloudUI("Saved offline · syncing privately", "busy");
+  } catch (error) {
+    updateCloudUI(
+      navigator.onLine ? "Could not sync · your device copy is safe" : "Offline · your device copy is safe",
+      "error"
+    );
+  } finally {
+    cloudBusy = false;
+  }
+}
+
+function applyBackupData(imported) {
+  applyingCloudBackup = true;
+  try {
+    if (imported.state) localStorage.setItem(APP_STATE_KEY, JSON.stringify(imported.state));
+    else localStorage.removeItem(APP_STATE_KEY);
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(imported.journal));
+    localStorage.setItem(CRAVINGS_KEY, JSON.stringify(imported.cravings));
+    localStorage.setItem(MOODS_KEY, JSON.stringify(imported.moods));
+    localStorage.setItem(NICOTINE_USES_KEY, JSON.stringify(imported.nicotineUses));
+    state = store.load();
+    activeTab = "today";
+    render();
+  } finally {
+    applyingCloudBackup = false;
+  }
+}
+
+async function reconcileCloudBackup({ firstConnect = false } = {}) {
+  const cloud = window.cytisinioCloud;
+  if (!cloudEnabled() || !cloud || !cloud.getUser().isLoggedIn || cloudReconciling) return;
+  cloudReconciling = true;
+  try {
+    cloudBusy = true;
+    updateCloudUI("Checking cloud backup…", "busy");
+    const remote = await cloud.sync();
+    const user = cloud.getUser();
+    const meta = cloudMeta();
+
+    if (!remote) {
+      await saveCloudBackup();
+      return;
+    }
+
+    const sameAccount = meta.userId === user.userId;
+    const alreadyApplied = meta.lastAppliedAt === remote.updatedAt;
+    if (alreadyApplied) {
+      updateCloudUI("Synced privately", "on");
+      return;
+    }
+
+    if ((firstConnect || !sameAccount) && state) {
+      const restoreRemote = confirm(
+        "A cloud backup already exists for this account. Restore it on this device?\n\nChoose Cancel to keep this device's data and replace the cloud backup instead."
+      );
+      if (!restoreRemote) {
+        await saveCloudBackup();
+        return;
+      }
+    }
+
+    const imported = validateBackup(remote.data, { allowNoCourse: true });
+    applyBackupData(imported);
+    setCloudMeta({ userId: user.userId, lastAppliedAt: remote.updatedAt });
+    updateCloudUI("Cloud backup restored and available offline", "on");
+  } catch (error) {
+    updateCloudUI(
+      navigator.onLine ? "Sync unavailable · your device copy is safe" : "Offline · your device copy is safe",
+      "error"
+    );
+  } finally {
+    cloudBusy = false;
+    cloudReconciling = false;
+  }
+}
+
+async function initCloudBackup() {
+  const cloud = window.cytisinioCloud;
+  if (!cloud) {
+    updateCloudUI();
+    return;
+  }
+
+  cloud.subscribe(({ type, value }) => {
+    if (type === "sync") cloudSyncState = value;
+    if (type === "sync" && cloudEnabled() && cloud.getUser().isLoggedIn && !cloudBusy) {
+      if (value.phase === "offline" || value.status === "offline") updateCloudUI("Offline · changes are saved on this device", "busy");
+      else if (value.phase === "error") updateCloudUI("Sync paused · your device copy is safe", "error");
+      else if (value.phase === "in-sync") updateCloudUI("Synced privately", "on");
+      else updateCloudUI("Syncing…", "busy");
+    } else if (type === "user") {
+      updateCloudUI();
+    } else if (type === "sync-complete" && cloudEnabled() && !cloudConnecting && !cloudReconciling) {
+      const meta = cloudMeta();
+      if (meta.userId === cloud.getUser().userId) reconcileCloudBackup();
+    }
+  });
+
+  try {
+    await cloud.ready;
+    updateCloudUI();
+    if (cloudEnabled() && cloud.getUser().isLoggedIn) {
+      await reconcileCloudBackup({ firstConnect: cloudMeta().userId !== cloud.getUser().userId });
+    }
+  } catch {
+    updateCloudUI("Unavailable here · manual backup still works", "error");
+  }
+}
 
 // ---- Date helpers ----
 function startDate() {
@@ -241,6 +485,14 @@ function cravingsOn(date) {
     .load()
     .filter((c) => sameDay(new Date(c.t), date))
     .sort((a, b) => (a.t < b.t ? -1 : 1));
+}
+
+function nicotineUsesOn(date) {
+  return nicotineUses.load().map((t) => new Date(t)).filter((t) => sameDay(t, date));
+}
+
+function nicotineProduct() {
+  return NICOTINE_PRODUCTS[state.nicotineProduct] || NICOTINE_PRODUCTS.cigarettes;
 }
 
 // Logged pills on the same calendar day as `date`, ascending
@@ -390,7 +642,7 @@ function render() {
     const sub = document.getElementById("done-subtitle");
     if (sub) {
       sub.textContent =
-        `${totalDays()} days done. You're a non-smoker now — the pills are finished, the habit is broken. ` +
+        `${totalDays()} days done. You're nicotine-free now — the pills are finished, the habit is broken. ` +
         `Cravings from here on are just echoes: rare, short, and beatable.`;
     }
     return;
@@ -432,17 +684,20 @@ function renderMain(now, day) {
     const daysLeft = QUIT_DAY - day;
     banner.textContent =
       daysLeft === 1
-        ? "🚭 Tomorrow is quit day — your last cigarette is today."
-        : `🚭 Quit day is day 5 — ${daysLeft} days to wind down smoking.`;
+        ? `🚭 Tomorrow is quit day — your last ${nicotineProduct().singular} is today.`
+        : `🚭 Quit day is day 5 — ${daysLeft} days to wind down nicotine.`;
   } else if (day === QUIT_DAY) {
     banner.hidden = false;
     banner.classList.remove("success");
-    banner.textContent = "🚭 Quit day. From today: zero cigarettes.";
+    banner.textContent = "🚭 Quit day. From today: zero nicotine.";
   } else {
     banner.hidden = false;
     banner.classList.add("success");
-    banner.textContent = `✨ Smoke-free for ${day - QUIT_DAY} day${day - QUIT_DAY === 1 ? "" : "s"} (since day 5)`;
+    banner.textContent = `✨ Nicotine-free for ${day - QUIT_DAY} day${day - QUIT_DAY === 1 ? "" : "s"} (since day 5)`;
   }
+
+
+  renderNicotineWindDown(now, day);
 
   // Today: logged + projected pills
   const plan = todayPlan(now, day);
@@ -521,6 +776,37 @@ function renderMain(now, day) {
   }
 }
 
+function renderNicotineWindDown(now, day) {
+  const card = document.getElementById("nicotine-card");
+  const baseline = Number(state.nicotineBaseline) || 0;
+  card.hidden = !baseline;
+  if (!baseline) return;
+
+  const product = nicotineProduct();
+  const entries = nicotineUsesOn(now);
+  const count = entries.length;
+  const noun = count === 1 ? product.singular : product.plural;
+  document.getElementById("nicotine-product-badge").textContent = product.badge;
+  document.getElementById("nicotine-today").textContent = `${count} ${noun} today · usual ${baseline}`;
+  document.getElementById("nicotine-bar").style.width = `${Math.min(100, (count / baseline) * 100)}%`;
+  document.getElementById("nicotine-plan").textContent =
+    day <= QUIT_DAY
+      ? NICOTINE_WIND_DOWN[day]
+      : "Stay at zero nicotine. A craving is temporary; log the craving instead of feeding it.";
+
+  const logButton = document.getElementById("btn-nicotine");
+  logButton.textContent = day >= QUIT_DAY ? `Log a ${product.singular} slip` : `＋ Log a ${product.singular}`;
+
+  const last = document.getElementById("last-nicotine");
+  if (entries.length) {
+    last.hidden = false;
+    last.innerHTML = `Last logged at <strong>${fmtTime(entries[entries.length - 1])}</strong> · <button type="button" id="btn-undo-nicotine" class="link-btn">undo</button>`;
+  } else {
+    last.hidden = true;
+    last.innerHTML = "";
+  }
+}
+
 // Build (or rebuild) a mood picker into `container` for the given day key.
 // Tapping the selected mood again clears it. Re-renders the calendar if it's live.
 function buildMoodPicker(container, key) {
@@ -586,7 +872,7 @@ function renderCalendar() {
   stats.innerHTML =
     `<div class="stat"><div class="stat-val">${state.log.length}</div><div class="stat-lbl">pills logged</div></div>` +
     `<div class="stat"><div class="stat-val">${adherence}%</div><div class="stat-lbl">on-time adherence</div></div>` +
-    `<div class="stat"><div class="stat-val">${smokeFree}</div><div class="stat-lbl">smoke-free days</div></div>` +
+    `<div class="stat"><div class="stat-val">${smokeFree}</div><div class="stat-lbl">nicotine-free days</div></div>` +
     `<div class="stat"><div class="stat-val">${allCravings.length}</div><div class="stat-lbl">cravings logged</div></div>` +
     `<div class="stat"><div class="stat-val">${avgMoodEmoji}</div><div class="stat-lbl">average mood</div></div>` +
     `<div class="stat"><div class="stat-val">${moodScores.length}</div><div class="stat-lbl">days rated</div></div>`;
@@ -722,8 +1008,10 @@ document.getElementById("setup-form").addEventListener("submit", (e) => {
   const start = document.getElementById("start-datetime").value;
   const wake = document.getElementById("wake-time").value;
   const mode = document.getElementById("mode-select").value === "75" ? "75" : "25";
+  const nicotineProduct = document.getElementById("nicotine-product").value;
+  const nicotineBaseline = Number(document.getElementById("nicotine-baseline").value) || null;
   if (!start) return;
-  state = { start, wake, log: [], mode };
+  state = { start, wake, log: [], mode, nicotineProduct, nicotineBaseline };
   store.save(state);
   render();
 });
@@ -791,6 +1079,20 @@ document.getElementById("btn-craving").addEventListener("click", () => {
   row.hidden = !row.hidden;
 });
 
+document.getElementById("btn-nicotine").addEventListener("click", () => {
+  nicotineUses.add(new Date().toISOString());
+  render();
+});
+
+document.getElementById("last-nicotine").addEventListener("click", (e) => {
+  if (e.target && e.target.id === "btn-undo-nicotine") {
+    const entries = nicotineUsesOn(new Date());
+    const last = entries[entries.length - 1];
+    if (last) nicotineUses.remove(last.toISOString());
+    render();
+  }
+});
+
 // Remove buttons live inside re-rendered innerHTML → delegate from the list
 document.getElementById("today-cravings").addEventListener("click", (e) => {
   const iso = e.target && e.target.getAttribute("data-craving");
@@ -815,6 +1117,8 @@ function openSettings() {
   document.getElementById("edit-wake").value = state.wake;
   document.getElementById("edit-timefmt").value = state.timeFmt || "auto";
   document.getElementById("edit-mode").value = courseMode();
+  document.getElementById("edit-nicotine-product").value = state.nicotineProduct || "cigarettes";
+  document.getElementById("edit-nicotine-baseline").value = state.nicotineBaseline || "";
   document.getElementById("settings-dialog").showModal();
 }
 
@@ -869,28 +1173,202 @@ document.getElementById("settings-form").addEventListener("submit", () => {
   const wake = document.getElementById("edit-wake").value;
   const timeFmt = document.getElementById("edit-timefmt").value;
   const mode = document.getElementById("edit-mode").value === "75" ? "75" : "25";
+  const nicotineProduct = document.getElementById("edit-nicotine-product").value;
+  const nicotineBaseline = Number(document.getElementById("edit-nicotine-baseline").value) || null;
   if (start && wake) {
-    state = { ...state, start, wake, timeFmt, mode };
+    state = { ...state, start, wake, timeFmt, mode, nicotineProduct, nicotineBaseline };
     store.save(state);
   }
   render();
 });
 
-document.getElementById("btn-export").addEventListener("click", (e) => {
-  const backup = JSON.stringify(
-    { state, journal: journal.load(), cravings: cravings.load(), moods: moods.load() },
-    null,
-    2
-  );
-  const btn = e.target;
-  const done = () => {
-    btn.textContent = "✅ Copied!";
-    setTimeout(() => (btn.textContent = "📋 Copy backup (pills, cravings, mood)"), 2000);
+function createBackup() {
+  return {
+    app: "cytisinio",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    state,
+    journal: journal.load(),
+    cravings: cravings.load(),
+    moods: moods.load(),
+    nicotineUses: nicotineUses.load(),
   };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(backup).then(done).catch(() => prompt("Copy your backup:", backup));
-  } else {
-    prompt("Copy your backup:", backup);
+}
+
+function validDateStrings(value) {
+  return Array.isArray(value) && value.every((item) => typeof item === "string" && !Number.isNaN(Date.parse(item)));
+}
+
+function validateBackup(value, { allowNoCourse = false } = {}) {
+  if (!value || typeof value !== "object" || (!allowNoCourse && (!value.state || typeof value.state !== "object"))) {
+    throw new Error("This is not a Cytisinio backup.");
+  }
+  const importedState = value.state;
+  if (importedState != null) {
+    if (typeof importedState !== "object" || Array.isArray(importedState)) {
+      throw new Error("The course data in this backup is invalid.");
+    }
+    const wakeMatch = typeof importedState.wake === "string" && importedState.wake.match(/^(\d{2}):(\d{2})$/);
+    if (
+      typeof importedState.start !== "string" ||
+      Number.isNaN(Date.parse(importedState.start)) ||
+      !wakeMatch ||
+      Number(wakeMatch[1]) > 23 ||
+      Number(wakeMatch[2]) > 59 ||
+      !validDateStrings(importedState.log)
+    ) {
+      throw new Error("The course data in this backup is invalid.");
+    }
+  } else if (!allowNoCourse) {
+    throw new Error("This backup does not contain an active course.");
+  }
+
+  const importedJournal = value.journal == null ? (importedState ? importedState.log : []) : value.journal;
+  const importedCravings = value.cravings == null ? [] : value.cravings;
+  const importedMoods = value.moods == null ? {} : value.moods;
+  const importedNicotineUses = value.nicotineUses == null ? [] : value.nicotineUses;
+
+  if (!validDateStrings(importedJournal) || !validDateStrings(importedNicotineUses)) {
+    throw new Error("The activity history in this backup is invalid.");
+  }
+  if (
+    !Array.isArray(importedCravings) ||
+    !importedCravings.every(
+      (entry) =>
+        entry &&
+        typeof entry.t === "string" &&
+        !Number.isNaN(Date.parse(entry.t)) &&
+        (entry.trigger == null || CRAVING_TRIGGERS.includes(entry.trigger))
+    )
+  ) {
+    throw new Error("The craving history in this backup is invalid.");
+  }
+  if (
+    !importedMoods ||
+    typeof importedMoods !== "object" ||
+    Array.isArray(importedMoods) ||
+    !Object.entries(importedMoods).every(
+      ([key, score]) => /^\d{4}-\d{2}-\d{2}$/.test(key) && Number.isInteger(score) && score >= 1 && score <= 5
+    )
+  ) {
+    throw new Error("The mood history in this backup is invalid.");
+  }
+
+  const cleanState = importedState
+    ? {
+        start: importedState.start,
+        wake: importedState.wake,
+        log: [...importedState.log],
+        mode: importedState.mode === "75" ? "75" : "25",
+        timeFmt: ["auto", "12", "24"].includes(importedState.timeFmt) ? importedState.timeFmt : "auto",
+        nicotineProduct: NICOTINE_PRODUCTS[importedState.nicotineProduct] ? importedState.nicotineProduct : "cigarettes",
+        nicotineBaseline:
+          Number.isInteger(Number(importedState.nicotineBaseline)) &&
+          Number(importedState.nicotineBaseline) >= 1 &&
+          Number(importedState.nicotineBaseline) <= 200
+            ? Number(importedState.nicotineBaseline)
+            : null,
+      }
+    : null;
+
+  return {
+    state: cleanState,
+    journal: [...importedJournal],
+    cravings: importedCravings.map((entry) => ({ t: entry.t, trigger: entry.trigger || null })),
+    moods: { ...importedMoods },
+    nicotineUses: [...importedNicotineUses],
+  };
+}
+
+document.getElementById("btn-export").addEventListener("click", (e) => {
+  const backup = JSON.stringify(createBackup(), null, 2);
+  const blob = new Blob([backup], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = e.currentTarget;
+  link.href = url;
+  link.download = `cytisinio-backup-${dayKey(new Date())}.json`;
+  // Give mobile browsers time to claim the Blob before releasing its URL.
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    link.href = "#";
+    link.removeAttribute("download");
+  }, 1000);
+
+  link.textContent = "✅ Backup downloaded";
+  setTimeout(() => (link.textContent = "⬇️ Download backup file"), 2000);
+});
+
+document.getElementById("backup-import").addEventListener("change", async (e) => {
+  const input = e.currentTarget;
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  try {
+    const imported = validateBackup(JSON.parse(await file.text()));
+    if (!confirm("Restore this backup? Current course data on this device will be replaced.")) return;
+
+    applyBackupData(imported);
+    document.getElementById("settings-dialog").close();
+    queueCloudSave();
+    alert("Backup restored successfully.");
+  } catch (error) {
+    alert(error instanceof Error ? error.message : "This backup could not be restored.");
+  } finally {
+    input.value = "";
+  }
+});
+
+document.getElementById("btn-cloud-enable").addEventListener("click", async () => {
+  const cloud = window.cytisinioCloud;
+  if (!cloud || cloudBusy) return;
+
+  if (!cloudEnabled()) {
+    const accepted = confirm(
+      "Enable private cloud backup?\n\nYour course and journey data will be sent to Dexie Cloud and linked to the email account you sign in with. Cytisinio will keep working offline, and you can disconnect at any time."
+    );
+    if (!accepted) return;
+  }
+
+  try {
+    cloudBusy = true;
+    cloudConnecting = true;
+    updateCloudUI("Waiting for email sign-in…", "busy");
+    const user = await cloud.login();
+    if (!user.isLoggedIn) throw new Error("Sign-in was not completed.");
+    localStorage.setItem(CLOUD_ENABLED_KEY, "1");
+    await reconcileCloudBackup({ firstConnect: cloudMeta().userId !== user.userId });
+  } catch (error) {
+    if (!cloud.getUser().isLoggedIn) localStorage.removeItem(CLOUD_ENABLED_KEY);
+    updateCloudUI(
+      error && error.name === "AbortError" ? "Cloud backup remains off" : "Sign-in was not completed · device data is safe",
+      error && error.name === "AbortError" ? "" : "error"
+    );
+  } finally {
+    cloudBusy = false;
+    cloudConnecting = false;
+    updateCloudUI();
+  }
+});
+
+document.getElementById("btn-cloud-sync").addEventListener("click", async () => {
+  await reconcileCloudBackup();
+});
+
+document.getElementById("btn-cloud-disable").addEventListener("click", async () => {
+  const cloud = window.cytisinioCloud;
+  if (!cloud || cloudBusy) return;
+  if (!confirm("Disconnect cloud backup on this device? Your local data and manual backups will remain.")) return;
+  try {
+    cloudBusy = true;
+    clearTimeout(cloudSaveTimer);
+    localStorage.removeItem(CLOUD_ENABLED_KEY);
+    updateCloudUI("Disconnecting…", "busy");
+    await cloud.logout();
+    updateCloudUI("Off · data stays only on this device");
+  } catch {
+    updateCloudUI("Could not disconnect · try again", "error");
+  } finally {
+    cloudBusy = false;
   }
 });
 
@@ -934,3 +1412,4 @@ if ("serviceWorker" in navigator) {
 }
 
 render();
+initCloudBackup();

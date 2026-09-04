@@ -1,0 +1,14 @@
+{
+  "name": "cytisinio",
+  "private": true,
+  "scripts": {
+    "build:cloud": "esbuild cloud-sync-src.js --bundle --minify --format=iife --platform=browser --target=es2020 --outfile=cloud-sync.js"
+  },
+  "dependencies": {
+    "dexie": "4.4.5",
+    "dexie-cloud-addon": "4.4.14"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

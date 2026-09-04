@@ -75,6 +75,22 @@ h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
 .bar { height: 8px; background: var(--card-2); border-radius: 6px; overflow: hidden; }
 .bar-fill { height: 100%; width: 0; background: var(--accent); border-radius: 6px; transition: width 0.4s ease; }
 .bar-fill.pills { background: var(--warn); }
+.bar-fill.nicotine { background: var(--danger); }
+
+.nicotine-card { border: 1px solid #3b3028; }
+.nicotine-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.nicotine-count { font-size: 20px; font-weight: 700; margin-top: 4px; }
+.product-badge {
+  background: var(--card-2);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.nicotine-plan { font-size: 15px; line-height: 1.5; }
+.nicotine-log-btn { margin-top: 0; }
 
 .next-pill-card { background: linear-gradient(135deg, var(--card-2), var(--card)); border: 1px solid var(--accent-dim); }
 .btn-took { margin-top: 6px; font-size: 17px; padding: 16px 18px; }
@@ -138,7 +154,7 @@ h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
 
 label { font-size: 14px; color: var(--muted); font-weight: 500; }
 
-input[type="datetime-local"], input[type="time"], select {
+input[type="datetime-local"], input[type="time"], input[type="number"], select {
   background: var(--card-2);
   border: 1px solid #2a3f38;
   border-radius: 10px;
@@ -179,6 +195,33 @@ input[type="datetime-local"], input[type="time"], select {
 .plan-table td:last-child { text-align: right; color: var(--muted); }
 
 .disclaimer { font-size: 12px; color: var(--muted); line-height: 1.5; text-align: center; padding: 0 8px; opacity: 0.8; }
+
+.source-link {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-dim);
+  align-self: center;
+  padding-bottom: 2px;
+}
+.source-link:hover, .source-link:focus-visible { color: var(--accent); }
+.privacy-card { border: 1px solid var(--accent-dim); }
+.privacy-card p:not(.card-label) { font-size: 14.5px; line-height: 1.55; }
+.github-button {
+  display: block;
+  background: var(--card-2);
+  border: 1px solid #2a3f38;
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 14px;
+  text-align: center;
+  text-decoration: none;
+}
+.github-button:active { transform: scale(0.98); }
 
 /* Bottom tab bar */
 .tabbar {
@@ -249,7 +292,9 @@ dialog {
   background: transparent;
   padding: 0;
   max-width: 420px;
+  max-height: calc(100dvh - 32px);
   width: calc(100vw - 32px);
+  overflow-y: auto;
   margin: auto;
 }
 dialog::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
@@ -259,6 +304,30 @@ dialog h2 { font-size: 18px; }
 .dialog-head .btn-icon { background: var(--card-2); font-size: 15px; line-height: 1; }
 .dialog-actions { display: flex; gap: 10px; margin-top: 8px; }
 .dialog-actions .btn-primary { flex: 1; }
+.backup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.backup-actions .btn-secondary { margin-top: 0; padding: 12px 10px; font-size: 14px; text-align: center; }
+.backup-import-label, .backup-download { display: flex; align-items: center; justify-content: center; cursor: pointer; text-decoration: none; }
+.cloud-backup {
+  margin-top: 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card-2);
+}
+.cloud-backup-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cloud-backup .card-label { margin-bottom: 3px; }
+.cloud-status { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+.cloud-dot { width: 9px; height: 9px; margin-top: 5px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
+.cloud-dot.on { background: #54c28a; box-shadow: 0 0 0 4px rgba(84, 194, 138, 0.12); }
+.cloud-dot.busy { background: #e6a94a; box-shadow: 0 0 0 4px rgba(230, 169, 74, 0.12); }
+.cloud-dot.error { background: #e86969; box-shadow: 0 0 0 4px rgba(232, 105, 105, 0.12); }
+.cloud-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cloud-actions .btn-secondary { margin: 0; padding: 10px 12px; font-size: 13px; }
+.btn-link-danger { border: 0; background: transparent; color: var(--danger); padding: 8px; cursor: pointer; }
+
+@media (max-width: 380px) {
+  .backup-actions { grid-template-columns: 1fr; }
+}
 
 /* Mood picker */
 .mood-picker { display: flex; gap: 8px; }
