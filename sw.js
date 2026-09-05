@@ -1,4 +1,4 @@
-const CACHE = "cytisinio-v15";
+const CACHE = "cytisinio-v16";
 const ASSETS = [
   ".",
   "index.html",

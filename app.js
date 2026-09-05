@@ -348,13 +348,21 @@ function updateCloudUI(message, tone) {
 
   accountTriggers.forEach((button) => {
     const label = button.querySelector(".cloud-account-label");
-    button.hidden = !enabled;
+    const isHomepageTrigger = button.classList.contains("cloud-account-home");
+    button.hidden = !isHomepageTrigger && !enabled;
     button.classList.toggle("paused", enabled && !user.isLoggedIn);
+    button.classList.toggle("signed-out", isHomepageTrigger && !enabled);
     button.classList.toggle("syncing", enabled && user.isLoggedIn && cloudBusy);
-    if (label) label.textContent = !user.isLoggedIn ? "Resume cloud" : cloudBusy ? "Syncing" : "Signed in";
+    if (label) {
+      label.textContent = user.isLoggedIn
+        ? cloudBusy ? "Syncing" : "Signed in"
+        : enabled ? "Resume cloud" : "Sign in";
+    }
     const accountText = user.isLoggedIn
       ? `Cloud backup on${user.email ? ` · signed in as ${user.email}` : ""}. Open settings.`
-      : "Cloud backup paused. Open settings to sign in again.";
+      : enabled
+        ? "Cloud backup paused. Sign in again."
+        : "Sign in to restore or enable cloud backup.";
     button.setAttribute("aria-label", accountText);
     button.title = accountText;
   });
@@ -1246,9 +1254,10 @@ document.getElementById("btn-tab-guide").addEventListener("click", () => {
 
 document.getElementById("btn-settings").addEventListener("click", openSettings);
 document.getElementById("btn-future-settings").addEventListener("click", openSettings);
-document.querySelectorAll(".cloud-account-trigger").forEach((button) => {
+document.querySelectorAll(".cloud-account-trigger:not(.cloud-account-home)").forEach((button) => {
   button.addEventListener("click", openSettings);
 });
+document.getElementById("btn-home-account").addEventListener("click", connectCloudBackup);
 
 document.getElementById("settings-form").addEventListener("submit", () => {
   const start = document.getElementById("edit-start").value;
