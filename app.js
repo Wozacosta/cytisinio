@@ -348,17 +348,21 @@ function updateCloudUI(message, tone) {
 
   accountTriggers.forEach((button) => {
     const label = button.querySelector(".cloud-account-label");
-    const isHomepageTrigger = button.classList.contains("cloud-account-home");
-    button.hidden = !isHomepageTrigger && !enabled;
+    button.hidden = false;
+    button.disabled = cloudBusy || !cloud;
     button.classList.toggle("paused", enabled && !user.isLoggedIn);
-    button.classList.toggle("signed-out", isHomepageTrigger && !enabled);
+    button.classList.toggle("signed-out", !enabled);
     button.classList.toggle("syncing", enabled && user.isLoggedIn && cloudBusy);
     if (label) {
-      label.textContent = user.isLoggedIn
+      label.textContent = !cloud
+        ? "Unavailable"
+        : user.isLoggedIn
         ? cloudBusy ? "Syncing" : "Signed in"
         : enabled ? "Resume cloud" : "Sign in";
     }
-    const accountText = user.isLoggedIn
+    const accountText = !cloud
+      ? "Cloud backup is unavailable."
+      : user.isLoggedIn
       ? `Cloud backup on${user.email ? ` · signed in as ${user.email}` : ""}. Open settings.`
       : enabled
         ? "Cloud backup paused. Sign in again."
@@ -1254,10 +1258,13 @@ document.getElementById("btn-tab-guide").addEventListener("click", () => {
 
 document.getElementById("btn-settings").addEventListener("click", openSettings);
 document.getElementById("btn-future-settings").addEventListener("click", openSettings);
-document.querySelectorAll(".cloud-account-trigger:not(.cloud-account-home)").forEach((button) => {
-  button.addEventListener("click", openSettings);
+document.querySelectorAll(".cloud-account-trigger").forEach((button) => {
+  button.addEventListener("click", () => {
+    const cloud = window.cytisinioCloud;
+    if (cloudEnabled() && cloud && cloud.getUser().isLoggedIn) openSettings();
+    else connectCloudBackup();
+  });
 });
-document.getElementById("btn-home-account").addEventListener("click", connectCloudBackup);
 
 document.getElementById("settings-form").addEventListener("submit", () => {
   const start = document.getElementById("edit-start").value;
