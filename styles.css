@@ -372,14 +372,14 @@ input[type="datetime-local"]:focus, input[type="time"]:focus, input[type="number
 .tabbar[hidden] { display: none; }
 .tab {
   flex: 1;
-  max-width: 224px;
+  min-width: 0;
   background: transparent;
   border: none;
   border-radius: 15px;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
-  padding: 11px 8px;
+  padding: 11px 5px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }

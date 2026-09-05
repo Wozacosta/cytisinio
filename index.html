@@ -113,32 +113,6 @@
 
       <div id="quit-banner" class="banner" hidden></div>
 
-      <div id="nicotine-card" class="card nicotine-card" hidden>
-        <div class="nicotine-head">
-          <div>
-            <p class="card-label">Nicotine wind-down</p>
-            <p id="nicotine-today" class="nicotine-count"></p>
-          </div>
-          <span id="nicotine-product-badge" class="product-badge"></span>
-        </div>
-        <div class="bar"><div id="nicotine-bar" class="bar-fill nicotine"></div></div>
-        <p id="nicotine-plan" class="nicotine-plan"></p>
-        <button type="button" id="btn-nicotine" class="btn-secondary nicotine-log-btn"></button>
-        <p id="last-nicotine" class="hint last-taken" hidden></p>
-        <p class="hint">There is no official pouch- or vape-specific numerical taper. Track your pattern, reduce during days 1–4, and stop all nicotine by day 5.</p>
-      </div>
-
-      <div class="card progress-card">
-        <div class="progress-row">
-          <div class="progress-head"><span>Time</span><span id="time-pct">0%</span></div>
-          <div class="bar"><div id="time-bar" class="bar-fill"></div></div>
-        </div>
-        <div class="progress-row">
-          <div class="progress-head"><span>Pills taken</span><span id="pills-pct">0 / 0 · 0%</span></div>
-          <div class="bar"><div id="pills-bar" class="bar-fill pills"></div></div>
-        </div>
-      </div>
-
       <div class="card next-pill-card">
         <p class="card-label">Next pill</p>
         <p id="next-pill-time" class="big-time">–</p>
@@ -158,6 +132,54 @@
         </div>
       </div>
 
+      <div class="card progress-card">
+        <div class="progress-row">
+          <div class="progress-head"><span>Course progress</span><span id="time-pct">0%</span></div>
+          <div class="bar"><div id="time-bar" class="bar-fill"></div></div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-head"><span>Pills taken</span><span id="pills-pct">0 / 0 · 0%</span></div>
+          <div class="bar"><div id="pills-bar" class="bar-fill pills"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-label">What to expect today</p>
+        <p id="day-guidance"></p>
+      </div>
+
+      <a class="source-link" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">🔍 Privacy & source code on GitHub</a>
+      <p class="disclaimer">Schedule helper only — follow your leaflet. Stop and see a doctor if you have chest pain, severe nausea or an allergic reaction.</p>
+    </section>
+
+    <!-- Daily tracking screen -->
+    <section id="screen-track" class="screen" hidden>
+      <header class="top">
+        <div>
+          <h1>Track</h1>
+          <p id="track-day-label" class="subtitle">Nicotine, mood & cravings</p>
+        </div>
+        <button type="button" class="cloud-account-trigger signed-out">
+          <span class="cloud-account-dot" aria-hidden="true"></span>
+          <span class="cloud-account-label">Sign in</span>
+        </button>
+      </header>
+
+      <div id="nicotine-card" class="card nicotine-card" hidden>
+        <div class="nicotine-head">
+          <div>
+            <p class="card-label">Nicotine wind-down</p>
+            <p id="nicotine-today" class="nicotine-count"></p>
+          </div>
+          <span id="nicotine-product-badge" class="product-badge"></span>
+        </div>
+        <div class="bar"><div id="nicotine-bar" class="bar-fill nicotine"></div></div>
+        <p id="nicotine-plan" class="nicotine-plan"></p>
+        <button type="button" id="btn-nicotine" class="btn-secondary nicotine-log-btn"></button>
+        <p id="last-nicotine" class="hint last-taken" hidden></p>
+        <p class="hint">There is no official pouch- or vape-specific numerical taper. Track your pattern, reduce during days 1–4, and stop all nicotine by day 5.</p>
+      </div>
+
       <div class="card">
         <p class="card-label">How do you feel today?</p>
         <div id="mood-picker" class="mood-picker"></div>
@@ -170,19 +192,6 @@
         <ul id="today-cravings" class="craving-list"></ul>
         <p class="hint">Logging cravings reveals your patterns over time. A craving passes in 3–5 minutes whether you smoke or not — breathe, drink water, move.</p>
       </div>
-
-      <div class="card">
-        <p class="card-label">What to expect today</p>
-        <p id="day-guidance"></p>
-      </div>
-
-      <div class="card">
-        <p class="card-label">Coming up</p>
-        <ul id="upcoming" class="upcoming-list"></ul>
-      </div>
-
-      <a class="source-link" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">🔍 Privacy & source code on GitHub</a>
-      <p class="disclaimer">Schedule helper only — follow your leaflet. Stop and see a doctor if you have chest pain, severe nausea or an allergic reaction.</p>
     </section>
 
     <!-- Future start screen -->
@@ -246,6 +255,11 @@
       </div>
 
       <div class="card">
+        <p class="card-label">Coming up</p>
+        <ul id="upcoming" class="upcoming-list"></ul>
+      </div>
+
+      <div class="card">
         <p class="card-label">Mood over time</p>
         <div id="mood-chart" class="mood-chart"></div>
         <p id="mood-chart-empty" class="hint" hidden>Log your mood each day and a trend line appears here.</p>
@@ -254,7 +268,7 @@
       <div class="card">
         <p class="card-label">Craving triggers</p>
         <ul id="trigger-breakdown" class="trigger-breakdown"></ul>
-        <p id="trigger-empty" class="hint" hidden>No cravings logged yet — tag them on the Today tab to see what sets them off.</p>
+        <p id="trigger-empty" class="hint" hidden>No cravings logged yet — tag them on the Track tab to see what sets them off.</p>
       </div>
     </section>
 
@@ -382,6 +396,7 @@
     <!-- Bottom tab bar -->
     <nav id="tabbar" class="tabbar" hidden>
       <button id="btn-tab-today" class="tab active">💊 Today</button>
+      <button id="btn-tab-track" class="tab">◎ Track</button>
       <button id="btn-tab-calendar" class="tab">📅 Journey</button>
       <button id="btn-tab-guide" class="tab">📖 Guide</button>
     </nav>

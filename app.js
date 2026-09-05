@@ -674,11 +674,12 @@ const screens = {
   main: document.getElementById("screen-main"),
   future: document.getElementById("screen-future"),
   done: document.getElementById("screen-done"),
+  track: document.getElementById("screen-track"),
   calendar: document.getElementById("screen-calendar"),
   guide: document.getElementById("screen-guide"),
 };
 
-let activeTab = "today"; // "today" | "calendar" | "guide"
+let activeTab = "today"; // "today" | "track" | "calendar" | "guide"
 
 function show(name) {
   Object.entries(screens).forEach(([k, el]) => (el.hidden = k !== name));
@@ -686,6 +687,7 @@ function show(name) {
   const tabbar = document.getElementById("tabbar");
   tabbar.hidden = name === "setup";
   document.getElementById("btn-tab-today").classList.toggle("active", name === "main" || name === "future" || name === "done");
+  document.getElementById("btn-tab-track").classList.toggle("active", name === "track");
   document.getElementById("btn-tab-calendar").classList.toggle("active", name === "calendar");
   document.getElementById("btn-tab-guide").classList.toggle("active", name === "guide");
 }
@@ -720,6 +722,12 @@ function render() {
 
   const now = new Date();
   const day = dayNumberFor(now);
+
+  if (activeTab === "track") {
+    show("track");
+    renderTrack(now, Math.max(1, Math.min(day, totalDays())));
+    return;
+  }
 
   if (day < 1) {
     show("future");
@@ -787,9 +795,6 @@ function renderMain(now, day) {
     banner.textContent = `✨ Nicotine-free for ${day - QUIT_DAY} day${day - QUIT_DAY === 1 ? "" : "s"} (since day 5)`;
   }
 
-
-  renderNicotineWindDown(now, day);
-
   // Today: logged + projected pills
   const plan = todayPlan(now, day);
   document.getElementById("taken-count").textContent = `${plan.taken.length}/${plan.total} taken`;
@@ -836,14 +841,18 @@ function renderMain(now, day) {
     lastEl.innerHTML = "";
   }
 
-  // Mood + cravings for today
-  buildMoodPicker(document.getElementById("mood-picker"), dayKey(now));
-  renderTodayCravings(now);
-
   // Guidance
   document.getElementById("day-guidance").textContent = guidanceFor(day);
+}
 
-  // Upcoming days
+function renderTrack(now, day) {
+  document.getElementById("track-day-label").textContent = `Day ${day} · nicotine, mood & cravings`;
+  renderNicotineWindDown(now, day);
+  buildMoodPicker(document.getElementById("mood-picker"), dayKey(now));
+  renderTodayCravings(now);
+}
+
+function renderUpcoming(day) {
   const up = document.getElementById("upcoming");
   up.innerHTML = "";
   for (let d = day + 1; d <= Math.min(day + 5, totalDays()); d++) {
@@ -1001,6 +1010,7 @@ function renderCalendar() {
 
   renderMoodChart(curDay, moodMap);
   renderTriggerBreakdown(allCravings);
+  renderUpcoming(curDay);
 }
 
 function renderMoodChart(curDay, moodMap) {
@@ -1243,6 +1253,11 @@ document.getElementById("day-dialog-body").addEventListener("click", (e) => {
 
 document.getElementById("btn-tab-today").addEventListener("click", () => {
   activeTab = "today";
+  render();
+});
+
+document.getElementById("btn-tab-track").addEventListener("click", () => {
+  activeTab = "track";
   render();
 });
 
