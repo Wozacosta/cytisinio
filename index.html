@@ -60,9 +60,9 @@
         <label for="mode-select">Course length</label>
         <select id="mode-select">
           <option value="25">Standard — 25 days (~101 pills)</option>
-          <option value="75">Extended maintenance — 75 days (~201 pills)</option>
+          <option value="75">Trial schedule — 75 days (~201 pills)</option>
         </select>
-        <p class="hint">75-day mode adds 50 maintenance days at 1 pill every 12 h — shown in trials to help prevent relapse in the first months. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12881894/" target="_blank" rel="noopener">Source</a></p>
+        <p class="hint"><strong>Experimental:</strong> this 75-day schedule is being studied in the ongoing CITISILONG trial. Its safety and effectiveness versus the standard 25-day course are not established yet. <a href="https://ctis.eu/trial/2024-518936-36-00" target="_blank" rel="noopener">Trial record</a></p>
 
         <button type="submit" class="btn-primary">Start my course</button>
       </form>
@@ -209,7 +209,7 @@
       <div class="hero">
         <div class="hero-icon">🎉</div>
         <h1>Course complete!</h1>
-        <p id="done-subtitle" class="subtitle">25 days done. You're nicotine-free now — the pills are finished, the habit is broken. Cravings from here on are just echoes: rare, short, and beatable.</p>
+        <p id="done-subtitle" class="subtitle">Course schedule complete. Your nicotine-free streak is based on the uses you logged.</p>
         <button id="btn-done-reset" class="btn-secondary">Start a new course</button>
       </div>
     </section>
@@ -503,8 +503,9 @@
               <label for="edit-mode">Course length</label>
               <select id="edit-mode">
                 <option value="25">Standard — 25 days</option>
-                <option value="75">Extended — 75 days</option>
+                <option value="75">Trial schedule — 75 days</option>
               </select>
+              <p class="hint"><strong>Experimental:</strong> the 75-day extension is still being evaluated in the ongoing CITISILONG trial.</p>
             </div>
             <div class="settings-field">
               <label for="edit-nicotine-product">Nicotine product</label>

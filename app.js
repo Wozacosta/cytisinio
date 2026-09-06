@@ -8,10 +8,10 @@ const BASE_PHASES = [
   { from: 17, to: 20, intervalMin: 300, pills: 3, label: "1 pill every 5 hours",   short: "every 5 h" },
   { from: 21, to: 25, intervalMin: 480, pills: 2, label: "1–2 pills a day",        short: "1–2 a day" },
 ];
-// 75-day mode (CITISILONG Arm C): the standard 25 days, then 50 maintenance days
-// at 1.5 mg every 12 h — shown in trials to reduce relapse in the first months.
+// Experimental 75-day schedule (CITISILONG Arm C): the standard 25 days, then
+// 50 maintenance days at 1.5 mg every 12 h. The Phase IV trial is ongoing.
 const MAINTENANCE_PHASE =
-  { from: 26, to: 75, intervalMin: 720, pills: 2, label: "Maintenance — 1 pill every 12 h", short: "every 12 h" };
+  { from: 26, to: 75, intervalMin: 720, pills: 2, label: "Experimental trial schedule — 1 pill every 12 h", short: "every 12 h" };
 const QUIT_DAY = 5;
 
 const NICOTINE_PRODUCTS = {
@@ -71,13 +71,13 @@ const GUIDANCE = {
 };
 
 const MAINTENANCE_GUIDANCE = {
-  26: "Maintenance phase begins: 1 pill morning and evening (every 12 h) for the next 50 days. The hard part is behind you — this phase is about locking it in. A longer course is shown in trials to cut the chance of relapse in the first months.",
-  75: "Final day of the extended course. 75 days — well past the window where most relapses happen. After today: no pills, no cigarettes, and a genuinely rewired brain. You did the whole thing.",
+  26: "Experimental trial schedule begins: 1 pill morning and evening (every 12 h) for 50 more days. CITISILONG is still studying how this compares with the standard 25-day course.",
+  75: "Final day of the experimental 75-day schedule. Keep using the habits and support that helped you, and keep logging any nicotine use honestly.",
 };
 const MAINTENANCE_GENERIC = [
-  "Maintenance: 1 pill morning and evening. Keep the twice-daily rhythm — it's an easy anchor and it's doing quiet work.",
-  "Cravings this far out are rare and brief. The pill is just insurance while the new habit sets like concrete.",
-  "You're smoke-free and past the danger zone. Keep sidestepping the 'just one' trap at social events.",
+  "Experimental maintenance schedule: 1 pill morning and evening. This extension is still being evaluated in a clinical trial.",
+  "Keep noting cravings and triggers during the trial extension; that record can help you see what is changing over time.",
+  "If you have stayed nicotine-free, protect that progress and keep sidestepping the 'just one' trap at social events.",
   "Long gaps between pills and you barely notice — that's exactly what recovery is supposed to feel like.",
   "Money saved is stacking up. If you haven't yet, make it visible — it's a strong reason to never restart.",
 ];
@@ -118,9 +118,11 @@ const journal = {
     const j = this.load();
     if (!j.includes(iso)) j.push(iso);
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(j));
+    clearCloudDeletion("journal", iso);
   },
   remove(iso) {
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(this.load().filter((t) => t !== iso)));
+    recordCloudDeletion("journal", iso);
   },
 };
 
@@ -186,10 +188,12 @@ const cravings = {
     c.push(entry);
     c.sort((a, b) => (a.t < b.t ? -1 : 1));
     localStorage.setItem(CRAVINGS_KEY, JSON.stringify(c));
+    clearCloudDeletion("cravings", entry.t);
     queueCloudSave();
   },
   remove(iso) {
     localStorage.setItem(CRAVINGS_KEY, JSON.stringify(this.load().filter((e) => e.t !== iso)));
+    recordCloudDeletion("cravings", iso);
     queueCloudSave();
   },
 };
@@ -208,6 +212,7 @@ const nicotineUses = {
     entries.push(iso);
     entries.sort();
     localStorage.setItem(NICOTINE_USES_KEY, JSON.stringify(entries));
+    clearCloudDeletion("nicotineUses", iso);
     queueCloudSave();
   },
   remove(iso) {
@@ -215,6 +220,7 @@ const nicotineUses = {
     const index = entries.lastIndexOf(iso);
     if (index >= 0) entries.splice(index, 1);
     localStorage.setItem(NICOTINE_USES_KEY, JSON.stringify(entries));
+    recordCloudDeletion("nicotineUses", iso);
     queueCloudSave();
   },
 };
@@ -232,8 +238,13 @@ const moods = {
   },
   set(dayKey, score) {
     const m = this.load();
-    if (score == null) delete m[dayKey];
-    else m[dayKey] = score;
+    if (score == null) {
+      delete m[dayKey];
+      recordCloudDeletion("moods", dayKey);
+    } else {
+      m[dayKey] = score;
+      clearCloudDeletion("moods", dayKey);
+    }
     localStorage.setItem(MOODS_KEY, JSON.stringify(m));
     queueCloudSave();
   },
@@ -247,7 +258,12 @@ let state = store.load();
 const CLOUD_ENABLED_KEY = "cytisinio-cloud-enabled";
 const CLOUD_META_KEY = "cytisinio-cloud-meta";
 const CLOUD_DEVICE_KEY = "cytisinio-cloud-device";
+const CLOUD_DIRTY_KEY = "cytisinio-cloud-dirty";
+const CLOUD_DELETIONS_KEY = "cytisinio-cloud-deletions";
+const CLOUD_HISTORY_TYPES = ["journal", "cravings", "moods", "nicotineUses"];
 let cloudSaveTimer = null;
+let cloudDirtyRevision = 0;
+let cloudSaveInFlight = null;
 let cloudBusy = false;
 let cloudConnecting = false;
 let cloudReconciling = false;
@@ -281,8 +297,61 @@ function setCloudMeta(next) {
   localStorage.setItem(CLOUD_META_KEY, JSON.stringify({ ...cloudMeta(), ...next }));
 }
 
+function emptyCloudDeletions() {
+  return { journal: {}, cravings: {}, moods: {}, nicotineUses: {} };
+}
+
+function normalizeCloudDeletions(value) {
+  const normalized = emptyCloudDeletions();
+  if (!value || typeof value !== "object" || Array.isArray(value)) return normalized;
+  CLOUD_HISTORY_TYPES.forEach((type) => {
+    // Version 2 briefly used string arrays for tombstones. Keep accepting them
+    // so an interrupted upgrade cannot strand a valid offline snapshot.
+    if (Array.isArray(value[type])) {
+      value[type].filter((item) => typeof item === "string").forEach((id) => {
+        normalized[type][id] = { deleted: true, at: "" };
+      });
+    } else if (value[type] && typeof value[type] === "object") {
+      Object.entries(value[type]).forEach(([id, marker]) => {
+        if (!marker || typeof marker !== "object" || typeof marker.deleted !== "boolean") return;
+        normalized[type][id] = {
+          deleted: marker.deleted,
+          at: typeof marker.at === "string" && !Number.isNaN(Date.parse(marker.at)) ? marker.at : "",
+        };
+      });
+    }
+  });
+  return normalized;
+}
+
+function cloudDeletions() {
+  try {
+    return normalizeCloudDeletions(JSON.parse(localStorage.getItem(CLOUD_DELETIONS_KEY)));
+  } catch {
+    return emptyCloudDeletions();
+  }
+}
+
+function recordCloudDeletion(type, id) {
+  const deleted = cloudDeletions();
+  deleted[type][id] = { deleted: true, at: new Date().toISOString() };
+  localStorage.setItem(CLOUD_DELETIONS_KEY, JSON.stringify(deleted));
+}
+
+function clearCloudDeletion(type, id) {
+  const deleted = cloudDeletions();
+  // An explicit add is an operation too. Keeping its marker distinguishes a
+  // genuine re-add from an old snapshot that simply never saw the deletion.
+  deleted[type][id] = { deleted: false, at: new Date().toISOString() };
+  localStorage.setItem(CLOUD_DELETIONS_KEY, JSON.stringify(deleted));
+}
+
 function queueCloudSave() {
-  if (applyingCloudBackup || !cloudEnabled() || !window.cytisinioCloud) return;
+  if (applyingCloudBackup) return;
+  cloudDirtyRevision += 1;
+  localStorage.setItem(CLOUD_DIRTY_KEY, "1");
+  if (!cloudEnabled()) return;
+  if (!window.cytisinioCloud) return;
   clearTimeout(cloudSaveTimer);
   cloudSaveTimer = setTimeout(() => saveCloudBackup(), 650);
 }
@@ -343,27 +412,143 @@ function updateCloudUI(message, tone) {
   });
 }
 
+function mergeCloudDeletions(left, right) {
+  const merged = emptyCloudDeletions();
+  CLOUD_HISTORY_TYPES.forEach((type) => {
+    const leftMarkers = left[type] || {};
+    const rightMarkers = right[type] || {};
+    const ids = new Set([...Object.keys(leftMarkers), ...Object.keys(rightMarkers)]);
+    ids.forEach((id) => {
+      const leftMarker = leftMarkers[id];
+      const rightMarker = rightMarkers[id];
+      if (!leftMarker) merged[type][id] = rightMarker;
+      else if (!rightMarker) merged[type][id] = leftMarker;
+      else merged[type][id] = rightMarker.at >= leftMarker.at ? rightMarker : leftMarker;
+    });
+  });
+  return merged;
+}
+
+function mergeBackupData(left, right, { preferRightState = true } = {}) {
+  const deleted = mergeCloudDeletions(left.deleted, right.deleted);
+  const deletedIds = (type) => new Set(
+    Object.entries(deleted[type]).filter(([, marker]) => marker.deleted).map(([id]) => id)
+  );
+  const deletedJournal = deletedIds("journal");
+  const deletedCravings = deletedIds("cravings");
+  const deletedMoods = deletedIds("moods");
+  const deletedNicotine = deletedIds("nicotineUses");
+
+  const journalEntries = [...new Set([...left.journal, ...right.journal])]
+    .filter((iso) => !deletedJournal.has(iso))
+    .sort();
+  const nicotineEntries = [...new Set([...left.nicotineUses, ...right.nicotineUses])]
+    .filter((iso) => !deletedNicotine.has(iso))
+    .sort();
+  const cravingMap = new Map();
+  [...left.cravings, ...right.cravings].forEach((entry) => cravingMap.set(entry.t, entry));
+  const cravingEntries = [...cravingMap.values()]
+    .filter((entry) => !deletedCravings.has(entry.t))
+    .sort((a, b) => a.t.localeCompare(b.t));
+  const moodEntries = { ...left.moods, ...right.moods };
+  deletedMoods.forEach((key) => delete moodEntries[key]);
+
+  const preferredState = preferRightState ? right.state : left.state;
+  let mergedState = preferredState ? { ...preferredState } : null;
+  if (mergedState) {
+    mergedState.log = [...new Set([
+      ...(left.state ? left.state.log : []),
+      ...(right.state ? right.state.log : []),
+      ...journalEntries,
+    ])]
+      .filter((iso) => !deletedJournal.has(iso) && new Date(iso) >= startOfDay(new Date(mergedState.start)))
+      .sort();
+  }
+
+  return {
+    state: mergedState,
+    journal: journalEntries,
+    cravings: cravingEntries,
+    moods: moodEntries,
+    nicotineUses: nicotineEntries,
+    deleted,
+  };
+}
+
+function mergedCloudBackup(bundle) {
+  if (!bundle || !Array.isArray(bundle.records)) return null;
+  let merged = null;
+  const records = [...bundle.records].sort((a, b) => String(a.updatedAt).localeCompare(String(b.updatedAt)));
+  for (const record of records) {
+    try {
+      const clean = validateBackup(record.data, { allowNoCourse: true });
+      merged = merged ? mergeBackupData(merged, clean) : clean;
+    } catch {
+      // One malformed legacy/device record must not hide the other valid copies.
+    }
+  }
+  return merged;
+}
+
+function portableBackup(data) {
+  return {
+    app: "cytisinio",
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    ...data,
+  };
+}
+
+async function persistCloudBackup(data, dirtyRevision) {
+  const cloud = window.cytisinioCloud;
+  const record = await cloud.save(portableBackup(data), cloudDeviceId());
+  const user = cloud.getUser();
+  setCloudMeta({ userId: user.userId, lastAppliedRevision: record.bundleRevision });
+  if (dirtyRevision === cloudDirtyRevision) localStorage.removeItem(CLOUD_DIRTY_KEY);
+  return record;
+}
+
 async function saveCloudBackup() {
   const cloud = window.cytisinioCloud;
   if (!cloudEnabled() || !cloud || !cloud.getUser().isLoggedIn || applyingCloudBackup) return;
-  try {
-    cloudBusy = true;
-    updateCloudUI("Saving locally, then syncing…", "busy");
-    const record = await cloud.save(createBackup(), cloudDeviceId());
-    const user = cloud.getUser();
-    setCloudMeta({ userId: user.userId, lastAppliedAt: record.updatedAt });
-    updateCloudUI("Saved offline · syncing privately", "busy");
-  } catch (error) {
-    updateCloudUI(
-      navigator.onLine ? "Could not sync · your device copy is safe" : "Offline · your device copy is safe",
-      "error"
-    );
-  } finally {
-    cloudBusy = false;
+  if (cloudReconciling) {
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(() => saveCloudBackup(), 650);
+    return;
   }
+  if (cloudSaveInFlight) return cloudSaveInFlight;
+
+  cloudSaveInFlight = (async () => {
+    try {
+      cloudBusy = true;
+      updateCloudUI("Saving locally, then syncing…", "busy");
+      const remote = mergedCloudBackup(await cloud.read());
+      // Read local state after the async cloud read. A user action that happens
+      // while IndexedDB is being read must be included, never applied over.
+      const local = validateBackup(createBackup(), { allowNoCourse: true });
+      const dirtyRevision = cloudDirtyRevision;
+      const merged = remote ? mergeBackupData(remote, local) : local;
+      applyBackupData(merged, { keepTab: true });
+      await persistCloudBackup(merged, dirtyRevision);
+      updateCloudUI("Saved offline · syncing privately", "busy");
+    } catch (error) {
+      updateCloudUI(
+        navigator.onLine ? "Could not sync · your device copy is safe" : "Offline · your device copy is safe",
+        "error"
+      );
+    } finally {
+      cloudBusy = false;
+      cloudSaveInFlight = null;
+      if (localStorage.getItem(CLOUD_DIRTY_KEY) === "1") {
+        clearTimeout(cloudSaveTimer);
+        cloudSaveTimer = setTimeout(() => saveCloudBackup(), 650);
+      }
+    }
+  })();
+  return cloudSaveInFlight;
 }
 
-function applyBackupData(imported) {
+function applyBackupData(imported, { keepTab = false } = {}) {
   applyingCloudBackup = true;
   try {
     if (imported.state) localStorage.setItem(APP_STATE_KEY, JSON.stringify(imported.state));
@@ -372,8 +557,9 @@ function applyBackupData(imported) {
     localStorage.setItem(CRAVINGS_KEY, JSON.stringify(imported.cravings));
     localStorage.setItem(MOODS_KEY, JSON.stringify(imported.moods));
     localStorage.setItem(NICOTINE_USES_KEY, JSON.stringify(imported.nicotineUses));
+    localStorage.setItem(CLOUD_DELETIONS_KEY, JSON.stringify(imported.deleted));
     state = store.load();
-    activeTab = "today";
+    if (!keepTab) activeTab = "today";
     render();
   } finally {
     applyingCloudBackup = false;
@@ -387,12 +573,22 @@ async function reconcileCloudBackup({ firstConnect = false } = {}) {
   try {
     cloudBusy = true;
     updateCloudUI("Checking cloud backup…", "busy");
-    const remote = await cloud.sync();
+    const remoteBundle = await cloud.sync();
+    const remote = mergedCloudBackup(remoteBundle);
     const user = cloud.getUser();
     const meta = cloudMeta();
 
     if (!remote) {
-      if (state) await saveCloudBackup();
+      const local = validateBackup(createBackup(), { allowNoCourse: true });
+      const hasLocalData = Boolean(
+        local.state || local.journal.length || local.cravings.length ||
+        Object.keys(local.moods).length || local.nicotineUses.length
+      );
+      if (hasLocalData) {
+        const dirtyRevision = cloudDirtyRevision;
+        await persistCloudBackup(local, dirtyRevision);
+        updateCloudUI("Saved offline · syncing privately", "busy");
+      }
       else {
         updateCloudUI("No cloud backup found for this account");
         if (firstConnect) alert("No Cytisinio backup was found for this account. You can start a new course below.");
@@ -401,26 +597,31 @@ async function reconcileCloudBackup({ firstConnect = false } = {}) {
     }
 
     const sameAccount = meta.userId === user.userId;
-    const alreadyApplied = meta.lastAppliedAt === remote.updatedAt;
-    if (alreadyApplied) {
+    const alreadyApplied = meta.lastAppliedRevision === remoteBundle.revision;
+    const hasLocalChanges = localStorage.getItem(CLOUD_DIRTY_KEY) === "1";
+    if (alreadyApplied && !hasLocalChanges) {
       updateCloudUI("Synced privately", "on");
       return;
     }
 
+    let preferRemoteState = !hasLocalChanges;
     if ((firstConnect || !sameAccount) && state) {
-      const restoreRemote = confirm(
-        "A cloud backup already exists for this account. Restore it on this device?\n\nChoose Cancel to keep this device's data and replace the cloud backup instead."
+      preferRemoteState = confirm(
+        "A cloud backup already exists for this account. Use its course settings on this device?\n\nYour pill, nicotine, craving, and mood histories will be merged either way. Choose Cancel to keep this device's course settings."
       );
-      if (!restoreRemote) {
-        await saveCloudBackup();
-        return;
-      }
     }
 
-    const imported = validateBackup(remote.data, { allowNoCourse: true });
-    applyBackupData(imported);
-    setCloudMeta({ userId: user.userId, lastAppliedAt: remote.updatedAt });
-    updateCloudUI("Cloud backup restored and available offline", "on");
+    const local = validateBackup(createBackup(), { allowNoCourse: true });
+    const merged = preferRemoteState
+      ? mergeBackupData(local, remote)
+      : mergeBackupData(remote, local);
+    applyBackupData(merged);
+    if (hasLocalChanges || firstConnect || !sameAccount) {
+      await persistCloudBackup(merged, cloudDirtyRevision);
+    } else {
+      setCloudMeta({ userId: user.userId, lastAppliedRevision: remoteBundle.revision });
+    }
+    updateCloudUI("Histories merged · cloud backup updated", "on");
   } catch (error) {
     updateCloudUI(
       navigator.onLine ? "Sync unavailable · your device copy is safe" : "Offline · your device copy is safe",
@@ -555,6 +756,20 @@ function nicotineUsesOn(date) {
 
 function nicotineProduct() {
   return NICOTINE_PRODUCTS[state.nicotineProduct] || NICOTINE_PRODUCTS.cigarettes;
+}
+
+function nicotineFreeStatus(now = new Date()) {
+  const quitAt = dateForDay(QUIT_DAY);
+  quitAt.setHours(0, 0, 0, 0);
+  const postQuitUses = nicotineUses
+    .load()
+    .map((iso) => new Date(iso))
+    .filter((date) => !Number.isNaN(date.getTime()) && date >= quitAt && date <= now)
+    .sort((a, b) => a - b);
+  const lastUse = postQuitUses[postQuitUses.length - 1] || null;
+  const since = lastUse || quitAt;
+  const days = now >= since ? Math.floor((now.getTime() - since.getTime()) / 86400000) : 0;
+  return { days: Math.max(0, days), lastUse, since };
 }
 
 // Logged pills on the same calendar day as `date`, ascending
@@ -715,9 +930,11 @@ function render() {
     show("done");
     const sub = document.getElementById("done-subtitle");
     if (sub) {
-      sub.textContent =
-        `${totalDays()} days done. You're nicotine-free now — the pills are finished, the habit is broken. ` +
-        `Cravings from here on are just echoes: rare, short, and beatable.`;
+      const streak = nicotineFreeStatus(now);
+      const unit = streak.days === 1 ? "day" : "days";
+      sub.textContent = streak.lastUse
+        ? `${totalDays()}-day schedule complete. Your current logged nicotine-free streak is ${streak.days} ${unit}, counted from your last logged nicotine use.`
+        : `${totalDays()}-day schedule complete. No nicotine use is logged after quit day; your current logged streak is ${streak.days} ${unit}.`;
     }
     return;
   }
@@ -760,14 +977,21 @@ function renderMain(now, day) {
       daysLeft === 1
         ? `🚭 Tomorrow is quit day — your last ${nicotineProduct().singular} is today.`
         : `🚭 Quit day is day 5 — ${daysLeft} days to wind down nicotine.`;
-  } else if (day === QUIT_DAY) {
-    banner.hidden = false;
-    banner.classList.remove("success");
-    banner.textContent = "🚭 Quit day. From today: zero nicotine.";
   } else {
+    const streak = nicotineFreeStatus(now);
     banner.hidden = false;
-    banner.classList.add("success");
-    banner.textContent = `✨ Nicotine-free for ${day - QUIT_DAY} day${day - QUIT_DAY === 1 ? "" : "s"} (since day 5)`;
+    banner.classList.toggle("success", !streak.lastUse || streak.days > 0);
+    if (streak.lastUse) {
+      const unit = streak.days === 1 ? "day" : "days";
+      banner.textContent = streak.days === 0
+        ? "↩️ Nicotine use logged since quit day. Your nicotine-free streak restarts from the latest log."
+        : `✨ ${streak.days} full ${unit} nicotine-free since your last logged nicotine use.`;
+    } else if (day === QUIT_DAY) {
+      banner.textContent = "🚭 Quit day. From today: zero nicotine.";
+    } else {
+      const unit = streak.days === 1 ? "day" : "days";
+      banner.textContent = `✨ ${streak.days} full ${unit} with no nicotine use logged since quit day.`;
+    }
   }
 
   // Today: logged + projected pills
@@ -839,7 +1063,7 @@ function renderUpcoming(day) {
     const isMaint = d === MAINTENANCE_PHASE.from;
     const isStep = phases().some((ph) => ph.from === d && d !== 1);
     if (isQuit || isStep) li.classList.add("milestone");
-    const tag = isQuit ? " · QUIT DAY" : isMaint ? " · maintenance" : isStep ? " · new phase" : "";
+    const tag = isQuit ? " · QUIT DAY" : isMaint ? " · TRIAL EXTENSION" : isStep ? " · new phase" : "";
     li.innerHTML =
       `<span class="u-day">Day ${d}${tag}</span>` +
       `<span class="u-date">${fmtDate(dateForDay(d))}</span>` +
@@ -932,7 +1156,7 @@ function renderCalendar() {
     takenDone += logsOn(dateForDay(d)).length;
   }
   const adherence = plannedDone ? Math.round((takenDone / plannedDone) * 100) : 100;
-  const smokeFree = Math.max(0, curDay - QUIT_DAY);
+  const smokeFree = nicotineFreeStatus(now).days;
 
   const courseStart = startOfDay(startDate());
   const allCravings = cravings.load().filter((c) => new Date(c.t) >= courseStart);
@@ -949,7 +1173,7 @@ function renderCalendar() {
   stats.innerHTML =
     `<div class="stat"><div class="stat-val">${state.log.length}</div><div class="stat-lbl">pills logged</div></div>` +
     `<div class="stat"><div class="stat-val">${adherence}%</div><div class="stat-lbl">on-time adherence</div></div>` +
-    `<div class="stat"><div class="stat-val">${smokeFree}</div><div class="stat-lbl">nicotine-free days</div></div>` +
+    `<div class="stat"><div class="stat-val">${smokeFree}</div><div class="stat-lbl">current logged nicotine-free streak</div></div>` +
     `<div class="stat"><div class="stat-val">${allCravings.length}</div><div class="stat-lbl">cravings logged</div></div>` +
     `<div class="stat"><div class="stat-val">${avgMoodEmoji}</div><div class="stat-lbl">average mood</div></div>` +
     `<div class="stat"><div class="stat-val">${moodScores.length}</div><div class="stat-lbl">days rated</div></div>`;
@@ -1275,13 +1499,14 @@ document.getElementById("settings-form").addEventListener("submit", () => {
 function createBackup() {
   return {
     app: "cytisinio",
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     state,
     journal: journal.load(),
     cravings: cravings.load(),
     moods: moods.load(),
     nicotineUses: nicotineUses.load(),
+    deleted: cloudDeletions(),
   };
 }
 
@@ -1317,6 +1542,7 @@ function validateBackup(value, { allowNoCourse = false } = {}) {
   const importedCravings = value.cravings == null ? [] : value.cravings;
   const importedMoods = value.moods == null ? {} : value.moods;
   const importedNicotineUses = value.nicotineUses == null ? [] : value.nicotineUses;
+  const importedDeleted = normalizeCloudDeletions(value.deleted);
 
   if (!validDateStrings(importedJournal) || !validDateStrings(importedNicotineUses)) {
     throw new Error("The activity history in this backup is invalid.");
@@ -1367,6 +1593,7 @@ function validateBackup(value, { allowNoCourse = false } = {}) {
     cravings: importedCravings.map((entry) => ({ t: entry.t, trigger: entry.trigger || null })),
     moods: { ...importedMoods },
     nicotineUses: [...importedNicotineUses],
+    deleted: importedDeleted,
   };
 }
 
@@ -1448,7 +1675,11 @@ document.getElementById("btn-done-reset").addEventListener("click", () => {
 
 // Re-render when returning to the app (day/next-pill may have changed)
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && state) render();
+  if (document.hidden && localStorage.getItem(CLOUD_DIRTY_KEY) === "1") saveCloudBackup();
+  else if (!document.hidden && state) render();
+});
+window.addEventListener("pagehide", () => {
+  if (localStorage.getItem(CLOUD_DIRTY_KEY) === "1") saveCloudBackup();
 });
 
 // One-shot import: open the app as /#log=11:17,13:20,15:30 to backfill

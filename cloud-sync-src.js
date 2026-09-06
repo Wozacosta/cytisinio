@@ -2,12 +2,14 @@ import Dexie from "dexie";
 import dexieCloud from "dexie-cloud-addon";
 
 const DATABASE_URL = "https://z6osshblh.dexie.cloud";
-const BACKUP_ID = "#current";
+const LEGACY_BACKUP_ID = "#current";
+const DEVICE_BACKUP_PREFIX = "#device:";
 
 const db = new Dexie("cytisinio", { addons: [dexieCloud] });
 
-// One private singleton is enough for a personal backup. IDs beginning with
-// "#" are private per-user singleton IDs in Dexie Cloud.
+// Each device owns a private snapshot. Separate IDs prevent two offline devices
+// from replacing one another's history; the app merges the snapshots after sync.
+// IDs beginning with "#" are private per-user singleton IDs in Dexie Cloud.
 db.version(1).stores({
   backups: "id,updatedAt",
 });
@@ -22,6 +24,25 @@ db.cloud.configure({
 
 const listeners = new Set();
 const ready = db.open();
+
+function backupId(writerId) {
+  return `${DEVICE_BACKUP_PREFIX}${writerId}`;
+}
+
+async function backupBundle() {
+  const records = (await db.table("backups").toArray())
+    .filter((record) => record.id === LEGACY_BACKUP_ID || record.id.startsWith(DEVICE_BACKUP_PREFIX))
+    .sort((a, b) => String(a.updatedAt).localeCompare(String(b.updatedAt)));
+  if (!records.length) return null;
+  return {
+    records,
+    // A vector-like fingerprint converges even when device clocks do not.
+    revision: [...records]
+      .sort((a, b) => a.id.localeCompare(b.id))
+      .map((record) => `${record.id}@${record.revision || record.updatedAt || "legacy"}`)
+      .join("|"),
+  };
+}
 
 function publicUser(user = db.cloud.currentUser.value) {
   return {
@@ -81,29 +102,37 @@ window.cytisinioCloud = {
 
   async read() {
     await ready;
-    return (await db.table("backups").get(BACKUP_ID)) || null;
+    return backupBundle();
   },
 
   async save(data, writerId) {
     await ready;
     if (!publicUser().isLoggedIn) throw new Error("Sign in before saving a cloud backup.");
+    const id = backupId(writerId);
+    const previous = await db.table("backups").get(id);
     const record = {
-      id: BACKUP_ID,
+      id,
+      revision: (Number(previous && previous.revision) || 0) + 1,
       updatedAt: new Date().toISOString(),
       writerId,
       data,
     };
-    await db.table("backups").put(record);
+    await db.transaction("rw", db.table("backups"), async () => {
+      await db.table("backups").put(record);
+      // The first device on the new format absorbs the old singleton before it
+      // is removed, so legacy users migrate without keeping a stale snapshot.
+      await db.table("backups").delete(LEGACY_BACKUP_ID);
+    });
     // The IndexedDB write above is the durable offline commit. Sync may finish
     // now or later when connectivity returns.
     db.cloud.sync().catch(() => {});
-    return record;
+    return { ...record, bundleRevision: (await backupBundle()).revision };
   },
 
   async sync() {
     await ready;
     if (!publicUser().isLoggedIn) return null;
     await db.cloud.sync({ purpose: "pull" });
-    return (await db.table("backups").get(BACKUP_ID)) || null;
+    return backupBundle();
   },
 };
