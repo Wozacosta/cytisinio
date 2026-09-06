@@ -40,6 +40,7 @@ body {
 }
 
 .screen { display: flex; flex-direction: column; gap: 15px; }
+[hidden] { display: none !important; }
 .screen[hidden] { display: none; }
 
 .hero { text-align: center; padding: 34px 8px 10px; }
