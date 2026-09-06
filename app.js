@@ -11,7 +11,7 @@ const BASE_PHASES = [
 // Experimental 75-day schedule (CITISILONG Arm C): the standard 25 days, then
 // 50 maintenance days at 1.5 mg every 12 h. The Phase IV trial is ongoing.
 const MAINTENANCE_PHASE =
-  { from: 26, to: 75, intervalMin: 720, pills: 2, label: "Experimental trial schedule — 1 pill every 12 h", short: "every 12 h" };
+  { from: 26, to: 75, intervalMin: 720, pills: 2, label: "Experimental trial schedule: 1 pill every 12 h", short: "every 12 h" };
 const QUIT_DAY = 5;
 
 const NICOTINE_PRODUCTS = {
@@ -22,11 +22,11 @@ const NICOTINE_PRODUCTS = {
 };
 
 const NICOTINE_WIND_DOWN = {
-  1: "Count each use without judgment. Do not increase above your usual pattern.",
-  2: "Delay the first use and skip one of the easiest automatic uses.",
-  3: "Stretch the gaps and make every use deliberate rather than automatic.",
-  4: "Last runway day. Remove your remaining supply and prepare for zero nicotine tomorrow.",
-  5: "Quit day: zero nicotine from today. If you slip, log it without judgment and continue.",
+  1: "Log each use. Keep at or below your usual amount.",
+  2: "Delay the first use and skip an easy, automatic one.",
+  3: "Leave more time between uses. Pause before each one.",
+  4: "This is the last day before quit day. Remove your remaining supply tonight.",
+  5: "Stop all nicotine today. If you use nicotine, log it and continue the course.",
 };
 
 function courseMode() {
@@ -43,43 +43,43 @@ function totalPills() {
 }
 
 const GUIDANCE = {
-  1: "First day. Keep smoking as usual for now — cytisine works by taking the nicotine receptors' seat, so cigarettes start feeling flat and unrewarding. Take a pill roughly every 2 hours while awake. Mild nausea or vivid dreams are common and usually pass.",
-  2: "Cigarettes may already taste worse — that's the cytisine competing with nicotine. Start skipping the automatic ones (with coffee, after meals). Drink plenty of water; it helps with the mild side effects.",
-  3: "Last day of the intensive phase. Aim to cut your smoking clearly (half or less of your usual). Notice which cigarettes you genuinely miss versus the ones that are pure reflex.",
-  4: "Dose steps down to every 2.5 hours. Pick your quit moment — it must happen by tomorrow. Get rid of lighters, ashtrays, and remaining cigarettes tonight if you can.",
-  5: "Quit day — from today you stop smoking completely. Smoking while on cytisine past this point can make you feel sick and undermines the treatment. Cravings will come in short waves (3–5 min): breathe, drink water, move. They pass whether you smoke or not.",
-  6: "First full smoke-free day behind you. Withdrawal peaks around now: irritability, restlessness, trouble focusing. It's your brain recalibrating — not a sign anything is wrong. Sleep may be lighter for a few days.",
-  7: "One week in. Cravings are still frequent but shorter. Your sense of smell and taste are already coming back. Keep hands and mouth busy — gum, toothpicks, water bottle.",
-  8: "The worst of the physical withdrawal is usually behind you after 72 h smoke-free. What's left is mostly habit: the triggers (coffee, breaks, alcohol, stress). Change the routine around them.",
-  9: "Cravings now come from situations, not chemistry. Spot your top 3 trigger moments and plan a replacement for each. A slip is not a relapse — if it happens, drop the cigarette and carry on with the course.",
-  10: "Energy and breathing are improving. Some people feel a dip in mood around now — normal, temporary. Physical activity, even a 15-minute walk, noticeably blunts cravings.",
-  11: "Double digits. The automatic gestures are fading. If you still get strong urges, check they're not actually hunger, boredom, or stress wearing a cigarette costume.",
-  12: "Last day at 5 pills. Tomorrow the schedule relaxes to every 3 hours — a sign your body needs less and less support.",
-  13: "Step down: 4 pills a day, every 3 hours. If you've been smoke-free since day 5, you've beaten the hardest week. Cravings should now be occasional, not constant.",
-  14: "Two weeks. Circulation and lung function are measurably improving. The cough some people get around now is your airways cleaning themselves out — it fades.",
-  15: "Halfway through the course. Most cravings are now just brief thoughts, not physical urges. Don't test yourself with 'just one' — that's how relapses start.",
-  16: "Last day at 4 pills. Think about what you're doing with the money not spent on cigarettes — make it visible (a jar, a savings note).",
-  17: "Step down: 3 pills a day, every 5 hours. Long gaps between pills and it feels fine — that's the point. Your dependence is unwinding.",
-  18: "Watch out for the 'I've got this, one won't hurt' trap — it's the most common relapse cause at this stage. You quit; there's nothing to renegotiate.",
-  19: "Sleep and mood should be back to normal or better. If stress is your main trigger, this is the week to lock in a replacement ritual that isn't food or scrolling.",
-  20: "Last day at 3 pills. Tomorrow starts the final taper. You're doing the easy part now — the pills are just escorting you out.",
-  21: "Final phase: 1–2 pills a day. Take 2 if you still feel occasional urges, 1 if you barely think about smoking. Either is fine.",
-  22: "Cravings at this point are rare and brief — memories, not needs. Acknowledge them like an old song on the radio and move on.",
-  23: "Three weeks smoke-free (if you quit on day 5). The habit loops are largely rewired. Keep avoiding 'just one' offers at parties — they're the last trap.",
-  24: "Second-to-last day. Plan how you'll handle your first big stress or celebration without cigarettes — have the answer ready before it happens.",
-  25: "Last pill day. After today you're done: no pills, no cigarettes, no schedule. If urges ever resurface weeks from now, they'll be short and rare — treat them like weather.",
+  1: "Keep smoking as usual for now. Cytisine partially activates nicotine receptors, which can reduce withdrawal and make cigarettes less satisfying. Take a pill roughly every 2 hours while awake. Mild nausea or vivid dreams are common and usually pass.",
+  2: "Cigarettes may already taste less pleasant as cytisine competes with nicotine at the receptors. Start skipping automatic cigarettes, such as those with coffee or after meals. Drink water if you have mild side effects.",
+  3: "This is the last day of the intensive phase. Aim for half or less of your usual smoking. Notice which cigarettes you choose and which ones are automatic.",
+  4: "The dose changes to every 2.5 hours. Choose when you will stop smoking tomorrow. Remove your cigarettes, lighters and ashtrays tonight if you can.",
+  5: "Stop smoking today. Continuing to smoke while taking cytisine can make you feel sick and reduce the benefit of treatment. Cravings often pass within 3–5 minutes. Breathe, drink water or move while you wait.",
+  6: "This is your first full smoke-free day. Irritability, restlessness and poor concentration are common withdrawal symptoms. Sleep may also be lighter for a few days.",
+  7: "You have completed one week. Cravings may still be frequent, but they often become shorter. Smell and taste may already be improving. Keep gum, toothpicks or water nearby.",
+  8: "Physical withdrawal often begins to ease after 72 hours without nicotine. Coffee, breaks, alcohol and stress can still trigger cravings. Change the routines linked to those moments.",
+  9: "Notice which situations trigger cravings and plan what you will do instead. If you smoke, stop there rather than buying a pack, then continue the course.",
+  10: "You may notice better breathing or energy. Some people also have a temporary dip in mood. Even a 15-minute walk can reduce a craving.",
+  11: "Automatic smoking habits may be starting to fade. When an urge appears, check whether you are hungry, bored or stressed before reaching for a cigarette.",
+  12: "This is the last day at 5 pills. Tomorrow the interval changes to every 3 hours.",
+  13: "Take 4 pills today, about 3 hours apart. If you stopped smoking on day 5, you have completed your first smoke-free week. Cravings may be less frequent now.",
+  14: "Two weeks in, circulation and lung function may be improving. Some people cough more for a while after quitting; it usually settles.",
+  15: "You are halfway through the course. Cravings may now feel more like brief thoughts than physical urges. Avoid testing yourself with one cigarette.",
+  16: "This is the last day at 4 pills. Track what you have saved by not buying cigarettes.",
+  17: "Take 3 pills today, about 5 hours apart. The longer gaps are part of the planned dose reduction.",
+  18: "The thought that one cigarette will not matter is common during a quit attempt. Let the urge pass without acting on it.",
+  19: "Sleep and mood may be settling. If stress triggers cravings, choose a simple replacement such as walking, calling someone or taking a short break.",
+  20: "This is the last day at 3 pills. The final dose reduction starts tomorrow.",
+  21: "The final phase is 1–2 pills a day. Follow the instructions in your package leaflet.",
+  22: "Cravings may be less frequent and shorter now. Notice the urge and give it time to pass.",
+  23: "If you stopped on day 5, you have been smoke-free for nearly three weeks. Keep declining offers of cigarettes, including at social events.",
+  24: "This is the second-to-last day. Decide now how you will handle stress or celebrations without cigarettes.",
+  25: "This is the last scheduled day. After today, stop taking the pills as directed by the standard course. Keep using the routines that helped you stay smoke-free.",
 };
 
 const MAINTENANCE_GUIDANCE = {
   26: "Experimental trial schedule begins: 1 pill morning and evening (every 12 h) for 50 more days. CITISILONG is still studying how this compares with the standard 25-day course.",
-  75: "Final day of the experimental 75-day schedule. Keep using the habits and support that helped you, and keep logging any nicotine use honestly.",
+  75: "This is the final day of the experimental 75-day schedule. Keep using the habits and support that helped you. Continue logging any nicotine use.",
 };
 const MAINTENANCE_GENERIC = [
   "Experimental maintenance schedule: 1 pill morning and evening. This extension is still being evaluated in a clinical trial.",
-  "Keep noting cravings and triggers during the trial extension; that record can help you see what is changing over time.",
-  "If you have stayed nicotine-free, protect that progress and keep sidestepping the 'just one' trap at social events.",
-  "Long gaps between pills and you barely notice — that's exactly what recovery is supposed to feel like.",
-  "Money saved is stacking up. If you haven't yet, make it visible — it's a strong reason to never restart.",
+  "Keep recording cravings and triggers during the trial extension so you can review changes over time.",
+  "If you have stayed nicotine-free, keep declining offers of nicotine at social events.",
+  "Continue taking one pill every 12 hours during the trial extension.",
+  "Keep tracking the money you have saved if that helps you stay nicotine-free.",
 ];
 
 function guidanceFor(day) {
@@ -393,12 +393,12 @@ function updateCloudUI(message, tone) {
   const enabled = cloudEnabled();
   status.textContent = message || (
     !cloud
-      ? "Unavailable · manual backup still works"
+      ? "Unavailable. Manual backup is still available"
       : !enabled
-        ? "Off · data stays only on this device"
+        ? "Off. Data stays on this device"
         : !user.isLoggedIn
-          ? "Paused · sign in to resume syncing"
-          : `Private sync on${user.email ? ` · ${user.email}` : ""}`
+          ? "Paused. Sign in to resume syncing"
+          : `Private sync on${user.email ? `: ${user.email}` : ""}`
   );
   dot.className = `cloud-dot${tone ? ` ${tone}` : enabled && user.isLoggedIn ? " on" : ""}`;
   enable.hidden = enabled && user.isLoggedIn;
@@ -428,7 +428,7 @@ function updateCloudUI(message, tone) {
     const accountText = !cloud
       ? "Cloud backup is unavailable."
       : user.isLoggedIn
-      ? `Cloud backup on${user.email ? ` · signed in as ${user.email}` : ""}. Open settings.`
+      ? `Cloud backup on${user.email ? `. Signed in as ${user.email}` : ""}. Open settings.`
       : enabled
         ? "Cloud backup paused. Sign in again."
         : "Sign in to restore or enable cloud backup.";
@@ -546,7 +546,7 @@ async function saveCloudBackup() {
   cloudSaveInFlight = (async () => {
     try {
       cloudBusy = true;
-      updateCloudUI("Saving locally, then syncing…", "busy");
+      updateCloudUI("Saving on this device, then syncing…", "busy");
       const remote = mergedCloudBackup(await cloud.read());
       // Read local state after the async cloud read. A user action that happens
       // while IndexedDB is being read must be included, never applied over.
@@ -555,10 +555,10 @@ async function saveCloudBackup() {
       const merged = remote ? mergeBackupData(remote, local) : local;
       applyBackupData(merged, { keepTab: true });
       await persistCloudBackup(merged, dirtyRevision);
-      updateCloudUI("Saved offline · syncing privately", "busy");
+      updateCloudUI("Saved on this device. Syncing…", "busy");
     } catch (error) {
       updateCloudUI(
-        navigator.onLine ? "Could not sync · your device copy is safe" : "Offline · your device copy is safe",
+        navigator.onLine ? "Could not sync. Your device copy is safe" : "Offline. Your device copy is safe",
         "error"
       );
     } finally {
@@ -612,7 +612,7 @@ async function reconcileCloudBackup({ firstConnect = false } = {}) {
       if (hasLocalData) {
         const dirtyRevision = cloudDirtyRevision;
         await persistCloudBackup(local, dirtyRevision);
-        updateCloudUI("Saved offline · syncing privately", "busy");
+        updateCloudUI("Saved on this device. Syncing…", "busy");
       }
       else {
         updateCloudUI("No cloud backup found for this account");
@@ -646,10 +646,10 @@ async function reconcileCloudBackup({ firstConnect = false } = {}) {
     } else {
       setCloudMeta({ userId: user.userId, lastAppliedRevision: remoteBundle.revision });
     }
-    updateCloudUI("Histories merged · cloud backup updated", "on");
+    updateCloudUI("History merged. Cloud backup updated", "on");
   } catch (error) {
     updateCloudUI(
-      navigator.onLine ? "Sync unavailable · your device copy is safe" : "Offline · your device copy is safe",
+      navigator.onLine ? "Sync unavailable. Your device copy is safe" : "Offline. Your device copy is safe",
       "error"
     );
   } finally {
@@ -664,7 +664,7 @@ async function connectCloudBackup() {
 
   if (!cloudEnabled()) {
     const accepted = confirm(
-      "Enable private cloud backup?\n\nYour course and journey data will be sent to Dexie Cloud and linked to the email account you sign in with. Cytisinio will keep working offline, and you can disconnect at any time."
+      "Enable private cloud backup?\n\nYour course, pill, nicotine, craving and mood data will be sent to Dexie Cloud and linked to the email account you sign in with. Cytisinio will keep working offline, and you can disconnect at any time."
     );
     if (!accepted) return;
   }
@@ -680,7 +680,7 @@ async function connectCloudBackup() {
   } catch (error) {
     if (!cloud.getUser().isLoggedIn) localStorage.removeItem(CLOUD_ENABLED_KEY);
     updateCloudUI(
-      error && error.name === "AbortError" ? "Cloud backup remains off" : "Sign-in was not completed · device data is safe",
+      error && error.name === "AbortError" ? "Cloud backup remains off" : "Sign-in was not completed. Your device data is safe",
       error && error.name === "AbortError" ? "" : "error"
     );
   } finally {
@@ -700,8 +700,8 @@ async function initCloudBackup() {
   cloud.subscribe(({ type, value }) => {
     if (type === "sync") cloudSyncState = value;
     if (type === "sync" && cloudEnabled() && cloud.getUser().isLoggedIn && !cloudBusy) {
-      if (value.phase === "offline" || value.status === "offline") updateCloudUI("Offline · changes are saved on this device", "busy");
-      else if (value.phase === "error") updateCloudUI("Sync paused · your device copy is safe", "error");
+      if (value.phase === "offline" || value.status === "offline") updateCloudUI("Offline. Changes are saved on this device", "busy");
+      else if (value.phase === "error") updateCloudUI("Sync paused. Your device copy is safe", "error");
       else if (value.phase === "in-sync") updateCloudUI("Synced privately", "on");
       else updateCloudUI("Syncing…", "busy");
     } else if (type === "user") {
@@ -719,7 +719,7 @@ async function initCloudBackup() {
       await reconcileCloudBackup({ firstConnect: cloudMeta().userId !== cloud.getUser().userId });
     }
   } catch {
-    updateCloudUI("Unavailable here · manual backup still works", "error");
+    updateCloudUI("Cloud backup is unavailable here. Manual backup is still available", "error");
   }
 }
 
@@ -1014,8 +1014,8 @@ function renderMain(now, day) {
     const daysLeft = QUIT_DAY - day;
     banner.textContent =
       daysLeft === 1
-        ? `🚭 Tomorrow is quit day — your last ${nicotineProduct().singular} is today.`
-        : `🚭 Quit day is day 5 — ${daysLeft} days to wind down nicotine.`;
+        ? `🚭 Tomorrow is quit day. Your last ${nicotineProduct().singular} is today.`
+        : `🚭 Quit day is day 5. You have ${daysLeft} days to reduce nicotine use.`;
   } else {
     const streak = nicotineFreeStatus(now);
     banner.hidden = false;
@@ -1135,7 +1135,7 @@ function renderNicotineWindDown(now, day) {
   document.getElementById("nicotine-plan").textContent =
     day <= QUIT_DAY
       ? NICOTINE_WIND_DOWN[day]
-      : "Stay at zero nicotine. A craving is temporary; log the craving instead of feeding it.";
+        : "Stay at zero nicotine. Log cravings and give them time to pass.";
 
   const logButton = document.getElementById("btn-nicotine");
   logButton.textContent = day >= QUIT_DAY ? `Log a ${product.singular} slip` : `＋ Log a ${product.singular}`;
@@ -1182,7 +1182,7 @@ function renderTodayCravings(now) {
     const li = document.createElement("li");
     li.innerHTML =
       `<span class="cv-when">${fmtTime(new Date(c.t))}</span>` +
-      `<span class="cv-trigger">${c.trigger || "—"}</span>` +
+      `<span class="cv-trigger">${c.trigger || "No trigger"}</span>` +
       `<button type="button" class="link-btn" data-craving="${c.t}">remove</button>`;
     ul.appendChild(li);
   });
@@ -1213,7 +1213,7 @@ function renderCalendar() {
     if (s) moodScores.push(s);
   }
   const avgMood = moodScores.length ? moodScores.reduce((a, b) => a + b, 0) / moodScores.length : null;
-  const avgMoodEmoji = avgMood ? MOOD_SCALE[Math.round(avgMood) - 1].emoji : "—";
+  const avgMoodEmoji = avgMood ? MOOD_SCALE[Math.round(avgMood) - 1].emoji : "Not rated";
 
   const stats = document.getElementById("cal-stats");
   stats.innerHTML =
@@ -1323,7 +1323,7 @@ function renderDayDialog() {
     `${fmtDate(date)}${day === QUIT_DAY ? " · 🚭 quit day" : ""} · ${phase.label}`;
 
   const pills =
-    `<div><p class="dd-label">Pills — ${taken.length}/${phase.pills} logged</p>` +
+    `<div><p class="dd-label">Pills: ${taken.length}/${phase.pills} logged</p>` +
     (taken.length
       ? `<ul class="pill-times">${taken.map((t) => `<li class="taken">${fmtTime(t)}</li>`).join("")}</ul>`
       : `<p class="dd-empty">No pills logged this day.</p>`) +
@@ -1333,13 +1333,13 @@ function renderDayDialog() {
     `<div><p class="dd-label">Mood</p><div id="dd-mood" class="mood-picker"></div></div>`;
 
   const crav =
-    `<div><p class="dd-label">Cravings — ${dayCravings.length}</p>` +
+    `<div><p class="dd-label">Cravings: ${dayCravings.length}</p>` +
     (dayCravings.length
       ? `<ul class="craving-list">${dayCravings
           .map(
             (c) =>
               `<li><span class="cv-when">${fmtTime(new Date(c.t))}</span>` +
-              `<span class="cv-trigger">${c.trigger || "—"}</span>` +
+              `<span class="cv-trigger">${c.trigger || "No trigger"}</span>` +
               `<button type="button" class="link-btn" data-craving="${c.t}">remove</button></li>`
           )
           .join("")}</ul>`
@@ -1704,16 +1704,16 @@ document.getElementById("btn-cloud-sync").addEventListener("click", async () => 
 document.getElementById("btn-cloud-disable").addEventListener("click", async () => {
   const cloud = window.cytisinioCloud;
   if (!cloud || cloudBusy) return;
-  if (!confirm("Disconnect cloud backup on this device? Your local data and manual backups will remain.")) return;
+  if (!confirm("Disconnect cloud backup on this device? Data saved on this device and manual backup files will remain.")) return;
   try {
     cloudBusy = true;
     clearTimeout(cloudSaveTimer);
     localStorage.removeItem(CLOUD_ENABLED_KEY);
     updateCloudUI("Disconnecting…", "busy");
     await cloud.logout();
-    updateCloudUI("Off · data stays only on this device");
+    updateCloudUI("Off. Data stays on this device");
   } catch {
-    updateCloudUI("Could not disconnect · try again", "error");
+    updateCloudUI("Could not disconnect. Try again", "error");
   } finally {
     cloudBusy = false;
     updateCloudUI();
@@ -1739,9 +1739,9 @@ document.getElementById("btn-cloud-delete").addEventListener("click", async () =
     localStorage.removeItem(CLOUD_META_KEY);
     localStorage.setItem(CLOUD_DIRTY_KEY, "1");
     await cloud.logout();
-    finalMessage = "Cloud backup deleted · local data remains";
+    finalMessage = "Cloud backup deleted. Data on this device remains";
   } catch {
-    finalMessage = "Could not verify cloud deletion · local data is safe";
+    finalMessage = "Could not verify cloud deletion. Data on this device is safe";
     finalTone = "error";
   } finally {
     cloudBusy = false;

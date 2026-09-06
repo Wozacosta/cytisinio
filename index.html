@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0b1512">
-  <meta name="description" content="Cytisine course companion — pill schedule and daily guidance for quitting cigarettes, vaping, or nicotine pouches.">
+  <meta name="description" content="Track your cytisine schedule, nicotine use, mood and cravings during a 25-day course.">
   <title>Cytisinio</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
@@ -39,7 +39,7 @@
       <div class="hero">
         <div class="hero-icon">💊</div>
         <h1>Cytisinio</h1>
-        <p class="subtitle">Your 25-day cytisine course companion<br>(Desmoxan · Recigar · Tabex · Dextasine)</p>
+        <p class="subtitle">Track a 25-day cytisine course<br>(Desmoxan · Recigar · Tabex · Dextasine)</p>
       </div>
 
       <form id="setup-form" class="card">
@@ -48,7 +48,7 @@
 
         <label for="wake-time">Usual time of your first pill each day</label>
         <input type="time" id="wake-time" value="08:00" required>
-        <p class="hint">Daily pill times are spread from this hour. You can change it later.</p>
+        <p class="hint">Your daily schedule starts at this time. You can change it later.</p>
 
         <label for="nicotine-product">What are you quitting?</label>
         <select id="nicotine-product">
@@ -60,14 +60,14 @@
 
         <label for="nicotine-baseline">Typical uses per day</label>
         <input type="number" id="nicotine-baseline" min="1" max="200" inputmode="numeric" placeholder="For example: 8">
-        <p class="hint">Count each cigarette or pouch. For vaping, count sessions rather than puffs. This is for tracking—not a prescribed dose.</p>
+        <p class="hint">Count each cigarette or pouch. For vaping, count sessions rather than puffs. This number is only used for tracking.</p>
 
         <label for="mode-select">Course length</label>
         <select id="mode-select">
-          <option value="25">Standard — 25 days (~101 pills)</option>
-          <option value="75">Trial schedule — 75 days (~201 pills)</option>
+          <option value="25">Standard: 25 days (~101 pills)</option>
+          <option value="75">Trial schedule: 75 days (~201 pills)</option>
         </select>
-        <p class="hint"><strong>Experimental:</strong> this 75-day schedule is being studied in the ongoing CITISILONG trial. Its safety and effectiveness versus the standard 25-day course are not established yet. <a href="https://ctis.eu/trial/2024-518936-36-00" target="_blank" rel="noopener">Trial record</a></p>
+        <p class="hint"><strong>Experimental:</strong> the ongoing CITISILONG trial is studying this 75-day schedule. Its safety and effectiveness compared with the standard 25-day course have not been established. <a href="https://ctis.eu/trial/2024-518936-36-00" target="_blank" rel="noopener">Trial record</a></p>
 
         <button type="submit" class="btn-primary">Start my course</button>
       </form>
@@ -84,8 +84,8 @@
         <p class="hint">You must stop all nicotine completely by day 5 at the latest.</p>
       </div>
 
-      <a class="source-link" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">🔍 Open source · inspect how your data is handled</a>
-      <p class="disclaimer">This app is a schedule helper, not medical advice. Follow your package leaflet and talk to a doctor or pharmacist if unsure.</p>
+      <a class="source-link" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">View the privacy code on GitHub</a>
+      <p class="disclaimer">This app helps you follow a schedule. It does not replace medical advice. Follow your package leaflet and ask a doctor or pharmacist if you are unsure.</p>
     </section>
 
     <!-- Main screen -->
@@ -117,7 +117,7 @@
       <div class="card">
         <p class="card-label">Today's pills · <span id="taken-count"></span></p>
         <ul id="today-times" class="pill-times"></ul>
-        <p class="hint">Crossed out = logged. Upcoming times are projected from your last logged pill.</p>
+        <p class="hint">Crossed-out times are logged. Later times are estimated from your last logged pill.</p>
         <button type="button" id="btn-backfill-toggle" class="link-btn backfill-toggle" aria-expanded="false" aria-controls="backfill-row">＋ log a pill at another time</button>
         <div id="backfill-row" class="backfill-row" hidden>
           <label for="backfill-time" class="sr-only">Pill time</label>
@@ -138,12 +138,12 @@
       </div>
 
       <div class="card">
-        <p class="card-label">What to expect today</p>
+        <p class="card-label">Today</p>
         <p id="day-guidance"></p>
       </div>
 
-      <a class="source-link" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">🔍 Privacy & source code on GitHub</a>
-      <p class="disclaimer">Schedule helper only — follow your leaflet. Stop and see a doctor if you have chest pain, severe nausea or an allergic reaction.</p>
+      <a class="source-link" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">Privacy and source code on GitHub</a>
+      <p class="disclaimer">Follow your package leaflet. Stop taking cytisine and seek medical advice if you have chest pain, severe nausea or an allergic reaction.</p>
     </section>
 
     <!-- Daily tracking screen -->
@@ -171,7 +171,7 @@
         <p id="nicotine-plan" class="nicotine-plan"></p>
         <button type="button" id="btn-nicotine" class="btn-secondary nicotine-log-btn"></button>
         <p id="last-nicotine" class="hint last-taken" hidden></p>
-        <p class="hint">There is no official pouch- or vape-specific numerical taper. Track your pattern, reduce during days 1–4, and stop all nicotine by day 5.</p>
+        <p class="hint">There is no official numerical taper for pouches or vaping. Reduce during days 1–4 and stop all nicotine by day 5.</p>
       </div>
 
       <div class="card">
@@ -184,7 +184,7 @@
         <button type="button" id="btn-craving" class="btn-secondary btn-craving" aria-expanded="false" aria-controls="craving-triggers">🌫️ I have a craving</button>
         <div id="craving-triggers" class="chips" role="group" aria-label="Craving trigger" hidden></div>
         <ul id="today-cravings" class="craving-list"></ul>
-        <p class="hint">Logging cravings reveals your patterns over time. A craving passes in 3–5 minutes whether you smoke or not — breathe, drink water, move.</p>
+        <p class="hint">Log cravings to spot patterns. Most pass within 3–5 minutes. Breathe, drink water or move while you wait.</p>
       </div>
     </section>
 
@@ -215,7 +215,7 @@
       <div class="hero">
         <div class="hero-icon">🎉</div>
         <h1>Course complete!</h1>
-        <p id="done-subtitle" class="subtitle">Course schedule complete. Your nicotine-free streak is based on the uses you logged.</p>
+        <p id="done-subtitle" class="subtitle">You have reached the end of the course schedule. Your nicotine-free streak uses only the entries you logged.</p>
         <button id="btn-done-reset" class="btn-secondary">Start a new course</button>
       </div>
     </section>
@@ -262,7 +262,7 @@
       <div class="card">
         <p class="card-label">Craving triggers</p>
         <ul id="trigger-breakdown" class="trigger-breakdown"></ul>
-        <p id="trigger-empty" class="hint" hidden>No cravings logged yet — tag them on the Track tab to see what sets them off.</p>
+        <p id="trigger-empty" class="hint" hidden>No cravings logged yet. Add a trigger on the Mood + cravings tab to see which ones occur most often.</p>
       </div>
     </section>
 
@@ -271,7 +271,7 @@
       <header class="top">
         <div>
           <h1>Guide</h1>
-          <p class="subtitle">Make these 25 days count</p>
+          <p class="subtitle">Course information and practical tips</p>
         </div>
         <button type="button" class="cloud-account-trigger signed-out">
           <span class="cloud-account-dot" aria-hidden="true"></span>
@@ -280,93 +280,93 @@
       </header>
 
       <div class="card privacy-card">
-        <p class="card-label">🔒 Privacy & open source</p>
-        <p><strong>Your course data stays in this browser by default.</strong> Optional cloud backup is off until you choose to enable it.</p>
-        <p class="hint">If enabled, your journey data is stored privately in your Dexie Cloud account so it can sync across devices. Vercel receives anonymous page-view and performance measurements only. You can inspect every line of the app yourself.</p>
+        <p class="card-label">Privacy and open source</p>
+        <p><strong>Your course data stays in this browser unless you enable cloud backup.</strong></p>
+        <p class="hint">With cloud backup on, Dexie Cloud stores your course data so your devices can sync. Vercel receives anonymous page-view and performance measurements. The source code is public.</p>
         <a class="github-button" href="https://github.com/Wozacosta/cytisinio" target="_blank" rel="noopener">View the source on GitHub ↗</a>
       </div>
 
       <details class="card guide" open>
-        <summary>🏆 How to do the best possible cure</summary>
+        <summary>Following the course</summary>
         <ul class="tips">
-          <li><strong>Respect the schedule.</strong> Cytisine works by keeping your nicotine receptors occupied — skipped pills leave the door open for cravings. Log every pill here.</li>
-          <li><strong>Quit fully by day 5.</strong> The course is built around it. Smoking on cytisine past day 5 feels bad (nausea) and undermines the receptor blockade.</li>
-          <li><strong>Take pills with a glass of water</strong>, ideally not on an empty stomach — it prevents most of the nausea.</li>
-          <li><strong>Break your trigger routines for 2 weeks.</strong> Coffee in a different spot, different break routine at work, no alcohol the first week if drinking = smoking for you.</li>
-          <li><strong>Plan your hands and mouth.</strong> Chewing gum, toothpicks, a water bottle, fidget object — the gesture is half the addiction.</li>
-          <li><strong>Snack smart.</strong> Nicotine was suppressing your appetite. Have fruit and nuts ready so you don't swap cigarettes for sugar.</li>
-          <li><strong>Tell people.</strong> Announce your quit day to friends/family. Social accountability measurably improves success rates.</li>
-          <li><strong>Make the money visible.</strong> Put your daily cigarette budget in a jar or a dedicated savings note. It compounds fast.</li>
-          <li><strong>A slip is not a relapse.</strong> If you smoke one, drop it, don't buy a pack, and continue the course. All-or-nothing thinking is the relapse engine.</li>
+          <li><strong>Follow the schedule.</strong> Cytisine partially activates nicotine receptors, which can reduce withdrawal and make nicotine less rewarding. Log each pill so you can see what you have taken.</li>
+          <li><strong>Stop nicotine by day 5.</strong> Continuing to use nicotine can worsen side effects and reduce the benefit of treatment.</li>
+          <li><strong>Take each pill with water.</strong> Food may help if you feel nauseous.</li>
+          <li><strong>Change routines linked to nicotine.</strong> Move your coffee, take a different break at work, or avoid alcohol at first if it makes you want to smoke.</li>
+          <li><strong>Keep substitutes nearby.</strong> Gum, toothpicks, water or a fidget object can help with the hand-to-mouth habit.</li>
+          <li><strong>Prepare simple snacks.</strong> Appetite can increase after stopping nicotine.</li>
+          <li><strong>Tell someone your quit date.</strong> Support from friends or family can improve your chances of quitting.</li>
+          <li><strong>Track the money you save.</strong> Put your usual cigarette budget in a jar or savings account.</li>
+          <li><strong>One cigarette does not have to restart the habit.</strong> Stop, avoid buying a pack and continue the course.</li>
         </ul>
       </details>
 
       <details class="card guide">
-        <summary>🏃 Sport — your best craving killer</summary>
+        <summary>Exercise and cravings</summary>
         <ul class="tips">
-          <li>Even <strong>10–15 minutes of brisk walking</strong> measurably reduces craving intensity and withdrawal symptoms — it's the closest thing to a free dose of relief.</li>
-          <li>Exercise gives you the <strong>dopamine hit</strong> your brain used to get from nicotine, but with better mood regulation and no crash.</li>
-          <li>Your <strong>cardio improves within 2 weeks</strong> of quitting — lung function starts recovering and oxygen transport improves as carbon monoxide leaves your blood. Training feels noticeably easier, which is very motivating.</li>
-          <li>Schedule workouts at your <strong>former smoking peak times</strong> (after work, after meals) — it rewrites the habit slot.</li>
-          <li>It also counters the two classic quitting worries: <strong>weight gain and stress</strong>.</li>
+          <li>A <strong>10–15 minute brisk walk</strong> can reduce cravings and withdrawal symptoms.</li>
+          <li>Exercise can improve your mood and give you something to do until a craving passes, without another nicotine dose.</li>
+          <li><strong>Circulation and lung function can begin improving within 2 weeks.</strong> Exercise may gradually feel easier.</li>
+          <li>Try exercising when you would usually use nicotine, such as after work or a meal.</li>
+          <li>Regular activity can also help with stress and weight changes.</li>
         </ul>
       </details>
 
       <details class="card guide">
-        <summary>😴 Sleep, coffee & side effects</summary>
+        <summary>Sleep, caffeine and side effects</summary>
         <ul class="tips">
-          <li><strong>Vivid dreams and lighter sleep</strong> are common the first week (both from cytisine and from nicotine withdrawal). It normalizes — and then your sleep gets <em>better</em> than when you smoked: nicotine was fragmenting it all along.</li>
-          <li><strong>Halve your caffeine.</strong> Smoking doubles how fast you burn caffeine — quit, and your usual coffee suddenly hits twice as hard. That "withdrawal anxiety and insomnia" is often just over-caffeination. No coffee after ~14:00 the first two weeks.</li>
-          <li><strong>Mild nausea, dry mouth, headaches</strong> in the first days are the most common cytisine side effects and usually pass. Water + food with pills helps.</li>
-          <li>Feeling <strong>foggy or irritable days 5–8</strong> is withdrawal, not the pills — it peaks around 72h smoke-free and then fades.</li>
+          <li><strong>Vivid dreams or lighter sleep</strong> can occur during the first week because of cytisine or nicotine withdrawal. Once this settles, sleep may improve because nicotine can disrupt it.</li>
+          <li><strong>Consider halving your caffeine.</strong> Smoking can roughly double how quickly your body clears caffeine, so your usual amount may feel stronger after you quit. Avoid caffeine after about 14:00 during the first 2 weeks if it affects your sleep.</li>
+          <li><strong>Mild nausea, dry mouth and headaches</strong> are common cytisine side effects. Water and food may help.</li>
+          <li><strong>Poor concentration or irritability</strong> can occur during days 5–8. Withdrawal often peaks around 72 hours without nicotine and then begins to ease.</li>
           <li>If you get <strong>severe symptoms</strong> (chest pain, vomiting, allergic reaction), stop and see a doctor.</li>
         </ul>
       </details>
 
       <details class="card guide">
-        <summary>✅ What quitting nicotine gives you</summary>
+        <summary>What changes after quitting</summary>
         <ul class="tips timeline">
           <li><strong>20 minutes:</strong> heart rate and blood pressure drop back down.</li>
           <li><strong>24–48 h:</strong> carbon monoxide is out of your blood; smell and taste start returning.</li>
-          <li><strong>72 h:</strong> breathing is easier; bronchial tubes relax. This is also the withdrawal peak — it's downhill after this.</li>
+          <li><strong>72 h:</strong> bronchial tubes begin to relax, which can make breathing feel easier. Withdrawal symptoms may still be strong.</li>
           <li><strong>2–12 weeks:</strong> circulation and lung function improve; exercise feels easier.</li>
-          <li><strong>3–9 months:</strong> coughing and shortness of breath fade; lung cilia regrow and clean house.</li>
+          <li><strong>3–9 months:</strong> coughing and shortness of breath often improve as the lungs recover.</li>
           <li><strong>1 year:</strong> risk of coronary heart disease is half that of a smoker.</li>
-          <li><strong>Mental health:</strong> despite the "smoking relaxes me" myth, studies show anxiety and depression scores <em>improve</em> after quitting — the "relief" of a cigarette was just relief from its own withdrawal.</li>
-          <li><strong>Money:</strong> a pack a day in France is ~€12 — that's <strong>~€4,400/year</strong> back in your pocket.</li>
-          <li><strong>Daily life:</strong> better skin, whiter teeth, no smell, no planning life around the next smoke break.</li>
+          <li><strong>Mental health:</strong> anxiety and depression symptoms often improve after quitting. A cigarette can feel calming because it temporarily relieves nicotine withdrawal.</li>
+          <li><strong>Money:</strong> at about €12 per pack, a pack a day costs roughly <strong>€4,400 per year</strong>.</li>
+          <li><strong>Daily life:</strong> skin and teeth may improve, the smoke smell goes away, and you no longer need to plan around cigarette breaks.</li>
         </ul>
       </details>
 
       <details class="card guide">
-        <summary>🟢 Pouches, vapes & other nicotine</summary>
+        <summary>Pouches, vaping and other nicotine</summary>
         <ul class="tips">
-          <li><strong>The finish line is the same:</strong> Desmoxan is intended for permanent cessation of nicotine-containing products, not cigarettes alone. Stop all nicotine no later than day 5.</li>
-          <li><strong>Days 1–4 are a runway, not a formula.</strong> There is no official milligram-by-milligram taper for pouches or vaping. Log each use, avoid increasing, delay the first use, remove automatic uses, and make the gaps longer.</li>
+          <li><strong>Desmoxan is intended to help you stop nicotine-containing products.</strong> The goal is to stop all nicotine no later than day 5.</li>
+          <li><strong>There is no official numerical taper for pouches or vaping.</strong> During days 1–4, log each use, avoid increasing, delay the first use and make the gaps longer.</li>
           <li><strong>Day 4:</strong> remove the remaining supply and prepare substitutes for the mouth-and-hands habit. Day 5 is zero nicotine.</li>
           <li><strong>Do not compensate</strong> by choosing stronger pouches, leaving them in longer, or vaping more intensely.</li>
-          <li><strong>Watch for too much nicotine effect.</strong> Using nicotine alongside cytisine can worsen effects such as nausea, dizziness, headache, or a racing heartbeat. Ask a pharmacist or clinician if you are unsure.</li>
+          <li><strong>Watch for signs of too much nicotine.</strong> Using nicotine alongside cytisine can worsen nausea, dizziness, headache or a racing heartbeat. Ask a pharmacist or clinician if you are unsure.</li>
           <li><a href="https://www.aflofarm.eu/en/products/otc/desmoxan-tablets/" target="_blank" rel="noopener">Desmoxan product information</a> · <a href="https://www.royalwolverhampton.nhs.uk/wp-content/uploads/2025/07/Cytisine_to_help_you_quit_smoking.pdf" target="_blank" rel="noopener">NHS cytisine FAQ</a></li>
         </ul>
       </details>
 
       <details class="card guide">
-        <summary>⚠️ Why not just switch to vaping</summary>
+        <summary>Switching to vaping</summary>
         <ul class="tips">
-          <li><strong>It keeps the addiction alive.</strong> Nicotine is the dependence, whatever the delivery device. Vaping after this course re-occupies the very receptors cytisine just freed — you'd be redoing the withdrawal later, from scratch.</li>
-          <li><strong>Nicotine itself isn't neutral:</strong> it raises heart rate and blood pressure, disrupts sleep, and drives the anxiety rollercoaster between doses.</li>
-          <li><strong>Modern vapes often deliver more nicotine than cigarettes</strong> — nicotine salts make high doses smooth to inhale, so dependence can end up stronger, with all-day grazing instead of discrete cigarettes.</li>
-          <li><strong>Long-term lung effects are unknown</strong> — vaping is very likely less harmful than smoking, but "less harmful than cigarettes" is a very low bar, and flavorings/aerosols are not proven safe to inhale for decades.</li>
-          <li><strong>Dual-use trap:</strong> many people who "switch" end up both vaping and smoking within a year — the vape maintains dependence, and a stressful day reopens the cigarette door.</li>
-          <li><strong>Cost creep:</strong> disposables and pods quietly reach smoking-level spending.</li>
-          <li>You're doing the hard part <em>right now</em>. Finishing nicotine-free means never having to do this again.</li>
+          <li>Vaping still supplies nicotine, so dependence continues and withdrawal still has to happen later.</li>
+          <li>Nicotine raises heart rate and blood pressure and can disrupt sleep. Withdrawal between doses can also feel like anxiety.</li>
+          <li>Some modern vapes can deliver more nicotine than cigarettes. Nicotine salts allow high doses with less throat irritation, which may encourage frequent use.</li>
+          <li>Vaping is considered less harmful than smoking, but its long-term lung effects are still being studied. Flavorings and aerosols have not been shown to be safe to inhale for decades.</li>
+          <li>Some people who switch are using both cigarettes and vapes within a year. This maintains nicotine dependence and exposure to cigarette smoke.</li>
+          <li>Disposables and pods can eventually cost as much as smoking.</li>
+          <li>If your goal is to stop nicotine, switching products does not complete that goal.</li>
         </ul>
       </details>
 
       <details class="card guide">
-        <summary>🗣 Real-world cytisine journeys</summary>
+        <summary>Cytisine reports from Reddit</summary>
         <div class="testimony-library">
-          <p class="anecdote-note">Personal reports can help you feel less alone, but they are anecdotes—not medical guidance. Experiences, side effects, and quit timelines vary.</p>
+          <p class="anecdote-note">These are personal reports, not medical guidance. Experiences, side effects and quit timelines vary.</p>
 
           <section class="testimony-section" aria-labelledby="testimony-early">
             <p id="testimony-early" class="links-label">Starting out · days 1–8</p>
@@ -374,7 +374,7 @@
               <a class="testimony-card" href="https://www.reddit.com/r/stopsmoking/comments/1r76xku/my_quit_smoking_experience_with_cytisine_tabex/" target="_blank" rel="noopener">
                 <span class="testimony-stage">Days 1–2 · smoking</span>
                 <strong>A detailed first attempt with Tabex</strong>
-                <span>Early changes in cigarette satisfaction, minor side effects, and an honest later update.</span>
+                <span>Early changes in cigarette satisfaction, minor side effects and a later update.</span>
               </a>
               <a class="testimony-card" href="https://www.reddit.com/r/stopsmoking/comments/1uibjwc/desmoxan_thank_you_changed_my_life/" target="_blank" rel="noopener">
                 <span class="testimony-stage">Days 1–4 · smoking</span>
@@ -384,12 +384,12 @@
               <a class="testimony-card" href="https://www.reddit.com/r/QuitVaping/comments/1v5z9wc/day_4_of_cytisine_miracle_yes_effortless_no/" target="_blank" rel="noopener">
                 <span class="testimony-stage">Day 4 · vaping</span>
                 <strong>“Helpful” does not always mean effortless</strong>
-                <span>A grounded check-in about still having urges while finding them easier to ride out.</span>
+                <span>A day 4 update about having urges that felt easier to manage.</span>
               </a>
               <a class="testimony-card" href="https://www.reddit.com/r/QuitVaping/comments/1o36mur/quitting_with_desmoxan_cytisine_a_balanced_report/" target="_blank" rel="noopener">
                 <span class="testimony-stage">Day 8 · vaping</span>
-                <strong>A balanced report after 48 hours nicotine-free</strong>
-                <span>What felt easier, what remained difficult, and why expectations matter.</span>
+                <strong>A report after 48 hours nicotine-free</strong>
+                <span>What felt easier and what remained difficult.</span>
               </a>
             </div>
           </section>
@@ -405,7 +405,7 @@
               <a class="testimony-card" href="https://www.reddit.com/r/QuitVaping/comments/1ufr0vl/experience_of_those_who_successfully_quit_using/" target="_blank" rel="noopener">
                 <span class="testimony-stage">Around day 22 · vaping</span>
                 <strong>Brief cravings and lessons from several attempts</strong>
-                <span>A useful discussion with multiple perspectives rather than a single miracle narrative.</span>
+                <span>Several people discuss cravings and previous quit attempts.</span>
               </a>
               <a class="testimony-card" href="https://www.reddit.com/r/stopsmoking/comments/1rwdo8i/desmoxan_cytisine_review_smokervaper_for_near_30/" target="_blank" rel="noopener">
                 <span class="testimony-stage">Day 25+ · smoking and vaping</span>
@@ -426,36 +426,36 @@
               <a class="testimony-card" href="https://www.reddit.com/r/QuitVaping/comments/1rulsim/6_months_nicotinevape_free_after_23_year/" target="_blank" rel="noopener">
                 <span class="testimony-stage">6 months · vaping</span>
                 <strong>Six months after a 23-year addiction</strong>
-                <span>A deliberately delayed success report reflecting on nicotine cravings versus the vaping habit.</span>
+                <span>A report posted six months after quitting about cravings and the vaping habit.</span>
               </a>
               <a class="testimony-card" href="https://www.reddit.com/r/stopsmoking/comments/116alz6/3_years_smoke_free_tabex_cytisine/" target="_blank" rel="noopener">
                 <span class="testimony-stage">3 years · smoking</span>
                 <strong>Three years smoke-free after Tabex</strong>
-                <span>A long-term outcome with community discussion about varied reactions and staying vigilant.</span>
+                <span>A three-year update followed by discussion of different reactions to cytisine.</span>
               </a>
             </div>
           </section>
 
           <section class="testimony-section" aria-labelledby="testimony-tips">
-            <p id="testimony-tips" class="links-label">Tip collections & community discussion</p>
+            <p id="testimony-tips" class="links-label">Tips and community discussion</p>
             <ul class="links testimony-tips">
-              <li><a href="https://www.reddit.com/r/QuitVaping/comments/1rbow0w/cytisinedesmoxantabexetc_share_your_experiences/" target="_blank" rel="noopener">Cytisine / Desmoxan / Tabex experience megathread</a> — many vaping timelines in one place.</li>
-              <li><a href="https://www.reddit.com/r/stopsmoking/comments/16uf880/cytisinetabexdesmoxan_is_it_better_to_follow_the/" target="_blank" rel="noopener">Days 1–4 discussion</a> — several people compare when they stopped smoking and what the first days felt like.</li>
-              <li><a href="https://www.reddit.com/r/stopsmoking/search/?q=cytisine%20OR%20tabex%20OR%20desmoxan&restrict_sr=1&sort=new" target="_blank" rel="noopener">Newest cytisine discussions on r/stopsmoking</a> — useful for current questions and fresh reports.</li>
+              <li><a href="https://www.reddit.com/r/QuitVaping/comments/1rbow0w/cytisinedesmoxantabexetc_share_your_experiences/" target="_blank" rel="noopener">Cytisine / Desmoxan / Tabex experience megathread</a>, with several vaping timelines.</li>
+              <li><a href="https://www.reddit.com/r/stopsmoking/comments/16uf880/cytisinetabexdesmoxan_is_it_better_to_follow_the/" target="_blank" rel="noopener">Days 1–4 discussion</a>, where people compare when they stopped smoking and how the first days felt.</li>
+              <li><a href="https://www.reddit.com/r/stopsmoking/search/?q=cytisine%20OR%20tabex%20OR%20desmoxan&restrict_sr=1&sort=new" target="_blank" rel="noopener">Newest cytisine discussions on r/stopsmoking</a>.</li>
             </ul>
           </section>
         </div>
       </details>
 
       <details class="card guide">
-        <summary>📚 Research & articles</summary>
+        <summary>Research and articles</summary>
         <div class="links-block">
           <ul class="links">
-            <li><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1407764" target="_blank" rel="noopener">NEJM — Cytisine versus Nicotine for Smoking Cessation</a> (cytisine beat nicotine patches in a 1,310-person trial)</li>
-            <li><a href="https://www.massgeneral.org/news/press-release/first-large-us-clinical-trial-of-cytisinicline-finds-the-smoking-cessation-medication-effective-and-well-tolerated" target="_blank" rel="noopener">Mass General — first large US trial (ORCA-2)</a> (32.6% abstinent vs 7% placebo, well tolerated)</li>
-            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9668543/" target="_blank" rel="noopener">Cochrane review — nicotine receptor partial agonists</a> (the gold-standard evidence summary)</li>
-            <li><a href="https://www.healthline.com/health-news/drug-works-better-than-nicotine-patches-to-help-smokers-quit-121714" target="_blank" rel="noopener">Healthline — "Drug works better than nicotine patches"</a> (accessible summary)</li>
-            <li><a href="https://www.euronews.com/health/2026/04/02/quitting-smoking-cytisine-can-help-and-other-tips" target="_blank" rel="noopener">Euronews — Quitting smoking: cytisine can help, and other tips</a></li>
+            <li><a href="https://www.nejm.org/doi/full/10.1056/NEJMoa1407764" target="_blank" rel="noopener">NEJM: Cytisine versus Nicotine for Smoking Cessation</a> (cytisine beat nicotine patches in a 1,310-person trial)</li>
+            <li><a href="https://www.massgeneral.org/news/press-release/first-large-us-clinical-trial-of-cytisinicline-finds-the-smoking-cessation-medication-effective-and-well-tolerated" target="_blank" rel="noopener">Mass General: first large US trial (ORCA-2)</a> (32.6% abstinent vs 7% placebo, well tolerated)</li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9668543/" target="_blank" rel="noopener">Cochrane review: nicotine receptor partial agonists</a> (evidence review)</li>
+            <li><a href="https://www.healthline.com/health-news/drug-works-better-than-nicotine-patches-to-help-smokers-quit-121714" target="_blank" rel="noopener">Healthline: "Drug works better than nicotine patches"</a> (plain-language summary)</li>
+            <li><a href="https://www.euronews.com/health/2026/04/02/quitting-smoking-cytisine-can-help-and-other-tips" target="_blank" rel="noopener">Euronews: Quitting smoking: cytisine can help, and other tips</a></li>
           </ul>
         </div>
       </details>
@@ -492,17 +492,17 @@
               <label for="edit-timefmt">Time format</label>
               <select id="edit-timefmt">
                 <option value="auto">Automatic</option>
-                <option value="24">24-hour — 18:00</option>
-                <option value="12">12-hour — 6:00 PM</option>
+                <option value="24">24-hour: 18:00</option>
+                <option value="12">12-hour: 6:00 PM</option>
               </select>
             </div>
             <div class="settings-field">
               <label for="edit-mode">Course length</label>
               <select id="edit-mode">
-                <option value="25">Standard — 25 days</option>
-                <option value="75">Trial schedule — 75 days</option>
+                <option value="25">Standard: 25 days</option>
+                <option value="75">Trial schedule: 75 days</option>
               </select>
-              <p class="hint"><strong>Experimental:</strong> the 75-day extension is still being evaluated in the ongoing CITISILONG trial.</p>
+              <p class="hint"><strong>Experimental:</strong> the ongoing CITISILONG trial is evaluating the 75-day extension.</p>
             </div>
             <div class="settings-field">
               <label for="edit-nicotine-product">Nicotine product</label>
@@ -529,7 +529,7 @@
             </div>
             <span id="cloud-dot" class="cloud-dot" aria-hidden="true"></span>
           </div>
-          <p class="cloud-description">Keep your progress safe and bring it to another device. Sign in with a one-time email code; Cytisinio still works fully offline.</p>
+          <p class="cloud-description">Cloud backup syncs your data across devices. Sign in with a one-time email code. Cytisinio continues to work offline.</p>
           <div class="cloud-actions">
             <button type="button" id="btn-cloud-enable" class="btn-primary btn-cloud-primary">Enable cloud backup</button>
             <button type="button" id="btn-cloud-sync" class="btn-secondary" hidden>Sync now</button>
@@ -543,7 +543,7 @@
             <p id="manual-backup-title" class="settings-section-title">Manual backup</p>
             <span>JSON file</span>
           </div>
-          <p class="hint">Download a portable copy or restore one you already have. The file stays under your control.</p>
+          <p class="hint">Download your data as a JSON file or restore a previous file.</p>
           <div class="backup-actions">
             <a id="btn-export" class="btn-secondary backup-download" href="#"><span aria-hidden="true">↓</span> Download</a>
             <label for="backup-import" class="btn-secondary backup-import-label" role="button" tabindex="0"><span aria-hidden="true">↑</span> Restore</label>
