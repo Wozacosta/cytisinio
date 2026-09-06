@@ -129,6 +129,23 @@ window.cytisinioCloud = {
     return { ...record, bundleRevision: (await backupBundle()).revision };
   },
 
+  async deleteAll() {
+    await ready;
+    if (!publicUser().isLoggedIn) throw new Error("Sign in before deleting cloud backups.");
+    // Pull first so every device snapshot currently on the server is present
+    // locally, then delete the complete private backup set and wait for sync.
+    await db.cloud.sync({ purpose: "pull" });
+    const table = db.table("backups");
+    const records = (await table.toArray()).filter(
+      (record) => record.id === LEGACY_BACKUP_ID || record.id.startsWith(DEVICE_BACKUP_PREFIX)
+    );
+    await db.transaction("rw", table, async () => {
+      await table.bulkDelete(records.map((record) => record.id));
+    });
+    await db.cloud.sync();
+    if (await backupBundle()) throw new Error("Cloud backup deletion could not be verified.");
+  },
+
   async sync() {
     await ready;
     if (!publicUser().isLoggedIn) return null;

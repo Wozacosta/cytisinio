@@ -13,14 +13,20 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Cytisinio">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
-  </script>
   <script defer src="/_vercel/insights/script.js"></script>
   <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
+  <!-- Visually fixed to the bottom on phones and the top on larger screens.
+       Keeping it before main content also makes desktop keyboard order honest. -->
+  <nav id="tabbar" class="tabbar" aria-label="Primary navigation" hidden>
+    <span class="tabbar-brand" aria-hidden="true">💊 Cytisinio</span>
+    <button type="button" id="btn-tab-today" class="tab active" aria-controls="screen-main">💊 Today</button>
+    <button type="button" id="btn-tab-track" class="tab" aria-controls="screen-track">◎ Mood + cravings</button>
+    <button type="button" id="btn-tab-calendar" class="tab" aria-controls="screen-calendar">📅 Journey</button>
+    <button type="button" id="btn-tab-guide" class="tab" aria-controls="screen-guide">📖 Guide</button>
+  </nav>
+
   <main id="app">
 
     <!-- Setup screen -->
@@ -99,22 +105,23 @@
         </div>
       </header>
 
-      <div id="quit-banner" class="banner" hidden></div>
+      <div id="quit-banner" class="banner" role="status" aria-live="polite" hidden></div>
 
       <div class="card next-pill-card">
         <p class="card-label">Next pill</p>
         <p id="next-pill-time" class="big-time">–</p>
         <p id="next-pill-countdown" class="countdown"></p>
-        <button id="btn-took" class="btn-primary btn-took">💊 I took a pill</button>
-        <p id="last-taken" class="hint last-taken" hidden></p>
+        <button id="btn-took" class="btn-primary btn-took" aria-describedby="last-taken">💊 I took a pill</button>
+        <p id="last-taken" class="hint last-taken" aria-live="polite" hidden></p>
       </div>
 
       <div class="card">
         <p class="card-label">Today's pills · <span id="taken-count"></span></p>
         <ul id="today-times" class="pill-times"></ul>
         <p class="hint">Crossed out = logged. Upcoming times are projected from your last logged pill.</p>
-        <button type="button" id="btn-backfill-toggle" class="link-btn backfill-toggle">＋ log a pill at another time</button>
+        <button type="button" id="btn-backfill-toggle" class="link-btn backfill-toggle" aria-expanded="false" aria-controls="backfill-row">＋ log a pill at another time</button>
         <div id="backfill-row" class="backfill-row" hidden>
+          <label for="backfill-time" class="sr-only">Pill time</label>
           <input type="time" id="backfill-time">
           <button type="button" id="btn-backfill-add" class="btn-primary btn-small">Add</button>
         </div>
@@ -123,11 +130,11 @@
       <div class="card progress-card">
         <div class="progress-row">
           <div class="progress-head"><span>Course progress</span><span id="time-pct">0%</span></div>
-          <div class="bar"><div id="time-bar" class="bar-fill"></div></div>
+          <div id="time-progress" class="bar" role="progressbar" aria-label="Course progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="time-bar" class="bar-fill"></div></div>
         </div>
         <div class="progress-row">
           <div class="progress-head"><span>Pills taken</span><span id="pills-pct">0 / 0 · 0%</span></div>
-          <div class="bar"><div id="pills-bar" class="bar-fill pills"></div></div>
+          <div id="pills-progress" class="bar" role="progressbar" aria-label="Pills taken" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="pills-bar" class="bar-fill pills"></div></div>
         </div>
       </div>
 
@@ -161,7 +168,7 @@
           </div>
           <span id="nicotine-product-badge" class="product-badge"></span>
         </div>
-        <div class="bar"><div id="nicotine-bar" class="bar-fill nicotine"></div></div>
+        <div id="nicotine-progress" class="bar" role="progressbar" aria-label="Nicotine uses compared with usual daily uses" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="nicotine-bar" class="bar-fill nicotine"></div></div>
         <p id="nicotine-plan" class="nicotine-plan"></p>
         <button type="button" id="btn-nicotine" class="btn-secondary nicotine-log-btn"></button>
         <p id="last-nicotine" class="hint last-taken" hidden></p>
@@ -170,13 +177,13 @@
 
       <div class="card">
         <p class="card-label">How do you feel today?</p>
-        <div id="mood-picker" class="mood-picker"></div>
+        <div id="mood-picker" class="mood-picker" role="group" aria-label="Mood rating"></div>
       </div>
 
       <div class="card">
         <p class="card-label">Cravings · <span id="craving-count"></span></p>
-        <button type="button" id="btn-craving" class="btn-secondary btn-craving">🌫️ I have a craving</button>
-        <div id="craving-triggers" class="chips" hidden></div>
+        <button type="button" id="btn-craving" class="btn-secondary btn-craving" aria-expanded="false" aria-controls="craving-triggers">🌫️ I have a craving</button>
+        <div id="craving-triggers" class="chips" role="group" aria-label="Craving trigger" hidden></div>
         <ul id="today-cravings" class="craving-list"></ul>
         <p class="hint">Logging cravings reveals your patterns over time. A craving passes in 3–5 minutes whether you smoke or not — breathe, drink water, move.</p>
       </div>
@@ -457,22 +464,13 @@
       <p class="disclaimer">General wellness information, not medical advice.</p>
     </section>
 
-    <!-- Bottom tab bar -->
-    <nav id="tabbar" class="tabbar" hidden>
-      <span class="tabbar-brand" aria-hidden="true">💊 Cytisinio</span>
-      <button id="btn-tab-today" class="tab active">💊 Today</button>
-      <button id="btn-tab-track" class="tab">◎ Mood + cravings</button>
-      <button id="btn-tab-calendar" class="tab">📅 Journey</button>
-      <button id="btn-tab-guide" class="tab">📖 Guide</button>
-    </nav>
-
     <!-- Settings dialog -->
-    <dialog id="settings-dialog">
+    <dialog id="settings-dialog" aria-labelledby="settings-dialog-title">
       <form id="settings-form" method="dialog" class="card settings-card">
         <div class="dialog-head settings-toolbar">
           <div>
             <p class="settings-eyebrow">Cytisinio</p>
-            <h2>Settings</h2>
+            <h2 id="settings-dialog-title">Settings</h2>
           </div>
           <button type="button" id="btn-close-settings" class="btn-icon" aria-label="Close">✕</button>
         </div>
@@ -537,6 +535,7 @@
             <button type="button" id="btn-cloud-enable" class="btn-primary btn-cloud-primary">Enable cloud backup</button>
             <button type="button" id="btn-cloud-sync" class="btn-secondary" hidden>Sync now</button>
             <button type="button" id="btn-cloud-disable" class="btn-link-danger" hidden>Disconnect</button>
+            <button type="button" id="btn-cloud-delete" class="btn-link-danger" hidden>Delete cloud backup</button>
           </div>
         </section>
 
@@ -548,7 +547,7 @@
           <p class="hint">Download a portable copy or restore one you already have. The file stays under your control.</p>
           <div class="backup-actions">
             <a id="btn-export" class="btn-secondary backup-download" href="#"><span aria-hidden="true">↓</span> Download</a>
-            <label for="backup-import" class="btn-secondary backup-import-label"><span aria-hidden="true">↑</span> Restore</label>
+            <label for="backup-import" class="btn-secondary backup-import-label" role="button" tabindex="0"><span aria-hidden="true">↑</span> Restore</label>
             <input type="file" id="backup-import" accept="application/json,.json" hidden>
           </div>
         </section>
@@ -561,7 +560,7 @@
     </dialog>
 
     <!-- Day detail dialog -->
-    <dialog id="day-dialog">
+    <dialog id="day-dialog" aria-labelledby="day-dialog-title" aria-describedby="day-dialog-date">
       <div class="card">
         <div class="dialog-head">
           <h2 id="day-dialog-title">Day</h2>

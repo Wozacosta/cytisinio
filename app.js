@@ -104,6 +104,19 @@ function phaseFor(day) {
 // clobbered, logged pills are recovered from it on next load.
 const JOURNAL_KEY = "cytisinio-journal";
 const APP_STATE_KEY = "cytisinio";
+const DUPLICATE_PILL_WINDOW_MS = 60000;
+
+function absoluteStart(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString();
+}
+
+function localDateTimeInput(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
 
 const journal = {
   load() {
@@ -124,6 +137,10 @@ const journal = {
     localStorage.setItem(JOURNAL_KEY, JSON.stringify(this.load().filter((t) => t !== iso)));
     recordCloudDeletion("journal", iso);
   },
+  clear() {
+    this.load().forEach((iso) => recordCloudDeletion("journal", iso));
+    localStorage.setItem(JOURNAL_KEY, "[]");
+  },
 };
 
 const store = {
@@ -132,6 +149,11 @@ const store = {
       const s = JSON.parse(localStorage.getItem(APP_STATE_KEY)) || null;
       if (!s) return null;
       if (!Array.isArray(s.log)) s.log = [];
+      const normalizedStart = absoluteStart(s.start);
+      if (normalizedStart !== s.start) {
+        s.start = normalizedStart;
+        localStorage.setItem(APP_STATE_KEY, JSON.stringify(s));
+      }
       // Recover any journal entries from this course that the log is missing
       const d0 = new Date(s.start);
       d0.setHours(0, 0, 0, 0);
@@ -150,7 +172,7 @@ const store = {
     queueCloudSave();
   },
   clear() {
-    // Intentionally leaves the journal in place — pill history is never destroyed.
+    // Starting a new course keeps the separate journey history by default.
     localStorage.removeItem(APP_STATE_KEY);
     queueCloudSave();
   },
@@ -362,8 +384,9 @@ function updateCloudUI(message, tone) {
   const enable = document.getElementById("btn-cloud-enable");
   const sync = document.getElementById("btn-cloud-sync");
   const disable = document.getElementById("btn-cloud-disable");
+  const deleteCloud = document.getElementById("btn-cloud-delete");
   const accountTriggers = document.querySelectorAll(".cloud-account-trigger");
-  if (!status || !dot || !enable || !sync || !disable) return;
+  if (!status || !dot || !enable || !sync || !disable || !deleteCloud) return;
 
   const cloud = window.cytisinioCloud;
   const user = cloud ? cloud.getUser() : { isLoggedIn: false };
@@ -382,9 +405,11 @@ function updateCloudUI(message, tone) {
   enable.textContent = enabled ? "Sign in to resume" : "Enable cloud backup";
   sync.hidden = !(enabled && user.isLoggedIn);
   disable.hidden = !enabled;
+  deleteCloud.hidden = !(enabled && user.isLoggedIn);
   enable.disabled = cloudBusy || !cloud;
   sync.disabled = cloudBusy;
   disable.disabled = cloudBusy;
+  deleteCloud.disabled = cloudBusy;
 
   accountTriggers.forEach((button) => {
     const label = button.querySelector(".cloud-account-label");
@@ -493,7 +518,7 @@ function mergedCloudBackup(bundle) {
 function portableBackup(data) {
   return {
     app: "cytisinio",
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     ...data,
   };
@@ -874,10 +899,18 @@ function show(name) {
   // Tab bar: visible whenever a course exists (not during setup)
   const tabbar = document.getElementById("tabbar");
   tabbar.hidden = name === "setup";
-  document.getElementById("btn-tab-today").classList.toggle("active", name === "main" || name === "future" || name === "done");
-  document.getElementById("btn-tab-track").classList.toggle("active", name === "track");
-  document.getElementById("btn-tab-calendar").classList.toggle("active", name === "calendar");
-  document.getElementById("btn-tab-guide").classList.toggle("active", name === "guide");
+  const tabStates = {
+    "btn-tab-today": name === "main" || name === "future" || name === "done",
+    "btn-tab-track": name === "track",
+    "btn-tab-calendar": name === "calendar",
+    "btn-tab-guide": name === "guide",
+  };
+  Object.entries(tabStates).forEach(([id, active]) => {
+    const button = document.getElementById(id);
+    button.classList.toggle("active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
   visibleScreen = name;
   if (screenChanged) window.scrollTo(0, 0);
 }
@@ -962,10 +995,16 @@ function renderMain(now, day) {
   const taken = state.log.length;
   const total = totalPills();
   const pPct = total ? (taken / total) * 100 : 0;
-  document.getElementById("time-pct").textContent = `${Math.round(tPct)}%`;
+  const roundedTimePct = Math.round(tPct);
+  const roundedPillPct = Math.min(100, Math.round(pPct));
+  document.getElementById("time-pct").textContent = `${roundedTimePct}%`;
   document.getElementById("time-bar").style.width = `${tPct}%`;
-  document.getElementById("pills-pct").textContent = `${taken} / ${total} · ${Math.round(pPct)}%`;
-  document.getElementById("pills-bar").style.width = `${pPct}%`;
+  document.getElementById("time-progress").setAttribute("aria-valuenow", String(roundedTimePct));
+  document.getElementById("time-progress").setAttribute("aria-valuetext", `${roundedTimePct}% of course time elapsed`);
+  document.getElementById("pills-pct").textContent = `${taken} / ${total} · ${roundedPillPct}%`;
+  document.getElementById("pills-bar").style.width = `${Math.min(100, pPct)}%`;
+  document.getElementById("pills-progress").setAttribute("aria-valuenow", String(roundedPillPct));
+  document.getElementById("pills-progress").setAttribute("aria-valuetext", `${taken} of ${total} pills logged`);
 
   // Quit banner
   const banner = document.getElementById("quit-banner");
@@ -1089,7 +1128,10 @@ function renderNicotineWindDown(now, day) {
   const noun = count === 1 ? product.singular : product.plural;
   document.getElementById("nicotine-product-badge").textContent = product.badge;
   document.getElementById("nicotine-today").textContent = `${count} ${noun} today · usual ${baseline}`;
-  document.getElementById("nicotine-bar").style.width = `${Math.min(100, (count / baseline) * 100)}%`;
+  const nicotinePct = Math.min(100, Math.round((count / baseline) * 100));
+  document.getElementById("nicotine-bar").style.width = `${nicotinePct}%`;
+  document.getElementById("nicotine-progress").setAttribute("aria-valuenow", String(nicotinePct));
+  document.getElementById("nicotine-progress").setAttribute("aria-valuetext", `${count} ${noun} logged today; usual daily amount ${baseline}`);
   document.getElementById("nicotine-plan").textContent =
     day <= QUIT_DAY
       ? NICOTINE_WIND_DOWN[day]
@@ -1112,11 +1154,14 @@ function renderNicotineWindDown(now, day) {
 // Tapping the selected mood again clears it. Re-renders the calendar if it's live.
 function buildMoodPicker(container, key) {
   container.innerHTML = "";
+  container.setAttribute("role", "group");
+  container.setAttribute("aria-label", "Mood rating");
   const current = moods.get(key);
   MOOD_SCALE.forEach((m) => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "mood-btn" + (current === m.score ? " selected" : "");
+    b.setAttribute("aria-pressed", String(current === m.score));
     b.innerHTML = `<span class="mood-emoji">${m.emoji}</span><span class="mood-lbl">${m.label}</span>`;
     b.addEventListener("click", () => {
       const next = moods.get(key) === m.score ? null : m.score;
@@ -1150,12 +1195,13 @@ function renderCalendar() {
 
   // Stats over fully-elapsed days (today excluded, since it's still in progress)
   let plannedDone = 0;
-  let takenDone = 0;
+  let completedDoses = 0;
   for (let d = 1; d < curDay; d++) {
-    plannedDone += phaseFor(d).pills;
-    takenDone += logsOn(dateForDay(d)).length;
+    const planned = phaseFor(d).pills;
+    plannedDone += planned;
+    completedDoses += Math.min(planned, logsOn(dateForDay(d)).length);
   }
-  const adherence = plannedDone ? Math.round((takenDone / plannedDone) * 100) : 100;
+  const doseCompletion = plannedDone ? Math.min(100, Math.round((completedDoses / plannedDone) * 100)) : 100;
   const smokeFree = nicotineFreeStatus(now).days;
 
   const courseStart = startOfDay(startDate());
@@ -1172,7 +1218,7 @@ function renderCalendar() {
   const stats = document.getElementById("cal-stats");
   stats.innerHTML =
     `<div class="stat"><div class="stat-val">${state.log.length}</div><div class="stat-lbl">pills logged</div></div>` +
-    `<div class="stat"><div class="stat-val">${adherence}%</div><div class="stat-lbl">on-time adherence</div></div>` +
+    `<div class="stat"><div class="stat-val">${doseCompletion}%</div><div class="stat-lbl">past-day dose completion</div></div>` +
     `<div class="stat"><div class="stat-val">${smokeFree}</div><div class="stat-lbl">current logged nicotine-free streak</div></div>` +
     `<div class="stat"><div class="stat-val">${allCravings.length}</div><div class="stat-lbl">cravings logged</div></div>` +
     `<div class="stat"><div class="stat-val">${avgMoodEmoji}</div><div class="stat-lbl">average mood</div></div>` +
@@ -1313,29 +1359,35 @@ document.getElementById("setup-form").addEventListener("submit", (e) => {
   const nicotineProduct = document.getElementById("nicotine-product").value;
   const nicotineBaseline = Number(document.getElementById("nicotine-baseline").value) || null;
   if (!start) return;
-  state = { start, wake, log: [], mode, nicotineProduct, nicotineBaseline };
+  state = { start: absoluteStart(start), wake, log: [], mode, nicotineProduct, nicotineBaseline };
   store.save(state);
   render();
 });
 
 function logPillAt(date) {
+  const timestamp = date.getTime();
+  const duplicate = state.log.some((loggedAt) => Math.abs(new Date(loggedAt).getTime() - timestamp) < DUPLICATE_PILL_WINDOW_MS);
+  if (duplicate) return false;
   const iso = date.toISOString();
-  if (!state.log.includes(iso)) {
-    state.log.push(iso);
-    state.log.sort();
-  }
+  state.log.push(iso);
+  state.log.sort();
   journal.add(iso);
   store.save(state);
+  return true;
 }
 
-document.getElementById("btn-took").addEventListener("click", () => {
-  logPillAt(new Date());
+document.getElementById("btn-took").addEventListener("click", (event) => {
+  const button = event.currentTarget;
+  if (!logPillAt(new Date())) return;
+  button.disabled = true;
   render();
+  setTimeout(() => (button.disabled = false), 750);
 });
 
 document.getElementById("btn-backfill-toggle").addEventListener("click", () => {
   const row = document.getElementById("backfill-row");
   row.hidden = !row.hidden;
+  document.getElementById("btn-backfill-toggle").setAttribute("aria-expanded", String(!row.hidden));
 });
 
 document.getElementById("btn-backfill-add").addEventListener("click", () => {
@@ -1346,6 +1398,7 @@ document.getElementById("btn-backfill-add").addEventListener("click", () => {
   d.setHours(+m[1], +m[2], 0, 0);
   logPillAt(d);
   document.getElementById("backfill-row").hidden = true;
+  document.getElementById("btn-backfill-toggle").setAttribute("aria-expanded", "false");
   document.getElementById("backfill-time").value = "";
   render();
 });
@@ -1373,12 +1426,14 @@ document.getElementById("btn-backfill-add").addEventListener("click", () => {
 function logCraving(trigger) {
   cravings.add({ t: new Date().toISOString(), trigger });
   document.getElementById("craving-triggers").hidden = true;
+  document.getElementById("btn-craving").setAttribute("aria-expanded", "false");
   render();
 }
 
 document.getElementById("btn-craving").addEventListener("click", () => {
   const row = document.getElementById("craving-triggers");
   row.hidden = !row.hidden;
+  document.getElementById("btn-craving").setAttribute("aria-expanded", String(!row.hidden));
 });
 
 document.getElementById("btn-nicotine").addEventListener("click", () => {
@@ -1415,7 +1470,7 @@ document.getElementById("last-taken").addEventListener("click", (e) => {
 });
 
 function openSettings() {
-  document.getElementById("edit-start").value = state.start;
+  document.getElementById("edit-start").value = localDateTimeInput(state.start);
   document.getElementById("edit-wake").value = state.wake;
   document.getElementById("edit-timefmt").value = state.timeFmt || "auto";
   document.getElementById("edit-mode").value = courseMode();
@@ -1490,7 +1545,7 @@ document.getElementById("settings-form").addEventListener("submit", () => {
   const nicotineProduct = document.getElementById("edit-nicotine-product").value;
   const nicotineBaseline = Number(document.getElementById("edit-nicotine-baseline").value) || null;
   if (start && wake) {
-    state = { ...state, start, wake, timeFmt, mode, nicotineProduct, nicotineBaseline };
+    state = { ...state, start: absoluteStart(start), wake, timeFmt, mode, nicotineProduct, nicotineBaseline };
     store.save(state);
   }
   render();
@@ -1499,7 +1554,7 @@ document.getElementById("settings-form").addEventListener("submit", () => {
 function createBackup() {
   return {
     app: "cytisinio",
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     state,
     journal: journal.load(),
@@ -1572,7 +1627,7 @@ function validateBackup(value, { allowNoCourse = false } = {}) {
 
   const cleanState = importedState
     ? {
-        start: importedState.start,
+        start: absoluteStart(importedState.start),
         wake: importedState.wake,
         log: [...importedState.log],
         mode: importedState.mode === "75" ? "75" : "25",
@@ -1635,6 +1690,12 @@ document.getElementById("backup-import").addEventListener("change", async (e) =>
   }
 });
 
+document.querySelector(".backup-import-label").addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  document.getElementById("backup-import").click();
+});
+
 document.getElementById("btn-cloud-enable").addEventListener("click", connectCloudBackup);
 document.getElementById("btn-cloud-sync").addEventListener("click", async () => {
   await reconcileCloudBackup();
@@ -1655,13 +1716,44 @@ document.getElementById("btn-cloud-disable").addEventListener("click", async () 
     updateCloudUI("Could not disconnect · try again", "error");
   } finally {
     cloudBusy = false;
+    updateCloudUI();
+  }
+});
+
+document.getElementById("btn-cloud-delete").addEventListener("click", async () => {
+  const cloud = window.cytisinioCloud;
+  if (!cloud || cloudBusy || !cloud.getUser().isLoggedIn) return;
+  if (!navigator.onLine) {
+    alert("Connect to the internet before deleting your cloud backup. Your local data is unchanged.");
+    return;
+  }
+  if (!confirm("Permanently delete every Cytisinio backup from this cloud account and disconnect this device? Your local data will remain.")) return;
+  let finalMessage = "";
+  let finalTone = "";
+  try {
+    cloudBusy = true;
+    clearTimeout(cloudSaveTimer);
+    updateCloudUI("Deleting cloud backup…", "busy");
+    await cloud.deleteAll();
+    localStorage.removeItem(CLOUD_ENABLED_KEY);
+    localStorage.removeItem(CLOUD_META_KEY);
+    localStorage.setItem(CLOUD_DIRTY_KEY, "1");
+    await cloud.logout();
+    finalMessage = "Cloud backup deleted · local data remains";
+  } catch {
+    finalMessage = "Could not verify cloud deletion · local data is safe";
+    finalTone = "error";
+  } finally {
+    cloudBusy = false;
+    updateCloudUI(finalMessage, finalTone);
   }
 });
 
 document.getElementById("btn-reset").addEventListener("click", () => {
-  if (confirm("Reset the course? Your start date and pill log will be erased.")) {
-    store.clear();
+  if (confirm("Reset this course and permanently erase every pill log on this device? Mood, craving, and nicotine-use history will remain.")) {
+    journal.clear();
     state = null;
+    store.clear();
     document.getElementById("settings-dialog").close();
     render();
   }
@@ -1681,20 +1773,6 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("pagehide", () => {
   if (localStorage.getItem(CLOUD_DIRTY_KEY) === "1") saveCloudBackup();
 });
-
-// One-shot import: open the app as /#log=11:17,13:20,15:30 to backfill
-// today's pills at those times. Idempotent (same time → same entry).
-(function importFromHash() {
-  if (!state || typeof location === "undefined" || !location.hash.startsWith("#log=")) return;
-  for (const t of decodeURIComponent(location.hash.slice(5)).split(",")) {
-    const m = t.trim().match(/^(\d{1,2}):(\d{2})$/);
-    if (!m) continue;
-    const d = new Date();
-    d.setHours(+m[1], +m[2], 0, 0);
-    logPillAt(d);
-  }
-  if (typeof history !== "undefined") history.replaceState(null, "", location.pathname);
-})();
 
 // ---- PWA ----
 if ("serviceWorker" in navigator) {
