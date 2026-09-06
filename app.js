@@ -651,8 +651,10 @@ const screens = {
 };
 
 let activeTab = "today"; // "today" | "track" | "calendar" | "guide"
+let visibleScreen = null;
 
 function show(name) {
+  const screenChanged = visibleScreen !== name;
   Object.entries(screens).forEach(([k, el]) => (el.hidden = k !== name));
   // Tab bar: visible whenever a course exists (not during setup)
   const tabbar = document.getElementById("tabbar");
@@ -661,6 +663,8 @@ function show(name) {
   document.getElementById("btn-tab-track").classList.toggle("active", name === "track");
   document.getElementById("btn-tab-calendar").classList.toggle("active", name === "calendar");
   document.getElementById("btn-tab-guide").classList.toggle("active", name === "guide");
+  visibleScreen = name;
+  if (screenChanged) window.scrollTo(0, 0);
 }
 
 // ---- Render ----
@@ -817,7 +821,9 @@ function renderMain(now, day) {
 }
 
 function renderTrack(now, day) {
-  document.getElementById("track-day-label").textContent = `Day ${day} · nicotine, mood & cravings`;
+  const tracksNicotine = Number(state.nicotineBaseline) > 0;
+  document.getElementById("track-day-label").textContent =
+    `Day ${day} · daily check-in${tracksNicotine ? " & nicotine wind-down" : ""}`;
   renderNicotineWindDown(now, day);
   buildMoodPicker(document.getElementById("mood-picker"), dayKey(now));
   renderTodayCravings(now);

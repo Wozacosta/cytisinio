@@ -324,6 +324,7 @@ input[type="datetime-local"]:focus, input[type="time"]:focus, input[type="number
   z-index: 20;
 }
 .tabbar[hidden] { display: none; }
+.tabbar-brand { display: none; }
 .tab {
   flex: 1;
   min-width: 0;
@@ -339,6 +340,7 @@ input[type="datetime-local"]:focus, input[type="time"]:focus, input[type="number
 }
 .tab:active { transform: scale(0.97); }
 .tab.active { background: linear-gradient(135deg, rgba(88, 216, 173, 0.28), rgba(43, 121, 94, 0.72)); color: var(--text); box-shadow: inset 0 1px rgba(255, 255, 255, 0.04); }
+#btn-tab-track { font-size: 11px; }
 
 /* Guide accordions */
 details.guide summary {
@@ -374,6 +376,39 @@ details.guide[open] summary::after { content: "－"; }
 .links li { font-size: 14px; line-height: 1.5; color: var(--muted); }
 .links a { color: var(--accent); text-decoration: none; border-bottom: 1px solid var(--accent-dim); }
 .links a:active { opacity: 0.7; }
+
+.testimony-library { margin-top: 13px; display: flex; flex-direction: column; gap: 20px; }
+.anecdote-note {
+  padding: 12px 13px;
+  border: 1px solid rgba(232, 189, 104, 0.18);
+  border-radius: 12px;
+  background: rgba(232, 189, 104, 0.055);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.testimony-section { display: flex; flex-direction: column; gap: 9px; }
+.testimony-section .links-label { margin: 0; }
+.testimony-list { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.testimony-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: rgba(126, 166, 152, 0.055);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.testimony-card:hover, .testimony-card:focus-visible { border-color: var(--accent-dim); background: rgba(126, 166, 152, 0.09); }
+.testimony-card:active { transform: scale(0.99); }
+.testimony-card::after { content: "Read on Reddit ↗"; color: var(--accent); font-size: 11px; font-weight: 650; margin-top: 3px; }
+.testimony-card strong { font-size: 14px; line-height: 1.35; }
+.testimony-card > span:not(.testimony-stage) { color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+.testimony-stage { color: var(--warn); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.075em; }
+.testimony-tips { margin-top: 2px; }
 
 dialog {
   border: none;
@@ -463,7 +498,32 @@ dialog h2 { font-size: 22px; letter-spacing: -0.02em; }
 }
 
 @media (min-width: 700px) {
-  #app { padding-top: 34px; }
+  #app {
+    max-width: 640px;
+    padding-top: 104px;
+    padding-bottom: 42px;
+  }
+  .tabbar {
+    top: max(16px, env(safe-area-inset-top));
+    bottom: auto;
+    width: min(720px, calc(100vw - 32px));
+    padding: 7px;
+    border-radius: 18px;
+    box-shadow: 0 14px 38px rgba(1, 8, 6, 0.28);
+  }
+  .tabbar-brand {
+    display: flex;
+    align-items: center;
+    padding: 0 18px 0 12px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 750;
+    letter-spacing: -0.015em;
+    white-space: nowrap;
+  }
+  .tab { flex: 0 1 auto; min-width: 116px; padding: 11px 13px; font-size: 13px; }
+  #btn-tab-track { min-width: 152px; font-size: 13px; }
+  .testimony-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
