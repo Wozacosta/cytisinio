@@ -293,10 +293,6 @@ function updateCloudUI(message, tone) {
   const enable = document.getElementById("btn-cloud-enable");
   const sync = document.getElementById("btn-cloud-sync");
   const disable = document.getElementById("btn-cloud-disable");
-  const home = document.getElementById("btn-home-cloud");
-  const homeTitle = document.getElementById("home-cloud-title");
-  const homeDescription = document.getElementById("home-cloud-description");
-  const homeBadge = document.getElementById("home-cloud-badge");
   const accountTriggers = document.querySelectorAll(".cloud-account-trigger");
   if (!status || !dot || !enable || !sync || !disable) return;
 
@@ -320,31 +316,6 @@ function updateCloudUI(message, tone) {
   enable.disabled = cloudBusy || !cloud;
   sync.disabled = cloudBusy;
   disable.disabled = cloudBusy;
-
-  if (home && homeTitle && homeDescription && homeBadge) {
-    home.disabled = cloudBusy || !cloud;
-    if (!cloud) {
-      homeTitle.textContent = "Cloud restore unavailable";
-      homeDescription.textContent = "You can still start a course and use a manual backup file.";
-      homeBadge.textContent = "Offline";
-    } else if (cloudBusy) {
-      homeTitle.textContent = "Checking your backup…";
-      homeDescription.textContent = "Keep this page open for a moment.";
-      homeBadge.textContent = "Working";
-    } else if (enabled && user.isLoggedIn) {
-      homeTitle.textContent = "Cloud backup connected";
-      homeDescription.textContent = "Your private backup is ready on this device.";
-      homeBadge.textContent = "Connected";
-    } else if (enabled) {
-      homeTitle.textContent = "Resume cloud backup";
-      homeDescription.textContent = "Sign in again to restore your private backup.";
-      homeBadge.textContent = "Paused";
-    } else {
-      homeTitle.textContent = "Restore from cloud";
-      homeDescription.textContent = "Already used Cytisinio? Bring your private backup to this device.";
-      homeBadge.textContent = "Optional";
-    }
-  }
 
   accountTriggers.forEach((button) => {
     const label = button.querySelector(".cloud-account-label");
@@ -1432,8 +1403,6 @@ document.getElementById("backup-import").addEventListener("change", async (e) =>
 });
 
 document.getElementById("btn-cloud-enable").addEventListener("click", connectCloudBackup);
-document.getElementById("btn-home-cloud").addEventListener("click", connectCloudBackup);
-
 document.getElementById("btn-cloud-sync").addEventListener("click", async () => {
   await reconcileCloudBackup();
 });

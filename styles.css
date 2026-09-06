@@ -58,53 +58,6 @@ body {
 h1 { font-size: 29px; font-weight: 750; letter-spacing: -0.035em; }
 .subtitle { color: var(--muted); font-size: 15px; margin-top: 6px; line-height: 1.45; }
 
-.home-cloud-cta {
-  width: 100%;
-  border: 1px solid rgba(79, 209, 165, 0.34);
-  border-radius: 18px;
-  padding: 15px 14px;
-  background: linear-gradient(135deg, rgba(44, 122, 95, 0.3), rgba(24, 38, 34, 0.96));
-  color: var(--text);
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto 14px;
-  align-items: center;
-  gap: 11px;
-  text-align: left;
-  cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
-}
-.home-cloud-cta:hover, .home-cloud-cta:focus-visible { border-color: var(--accent); background: linear-gradient(135deg, rgba(44, 122, 95, 0.4), rgba(24, 38, 34, 0.98)); }
-.home-cloud-cta:active { transform: scale(0.99); }
-.home-cloud-cta:disabled { cursor: default; opacity: 0.58; }
-.home-cloud-icon {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  background: rgba(79, 209, 165, 0.12);
-  font-size: 20px;
-}
-.home-cloud-copy { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.home-cloud-copy strong { font-size: 14.5px; line-height: 1.25; }
-.home-cloud-copy > span { color: var(--muted); font-size: 12px; line-height: 1.35; }
-.home-cloud-badge {
-  color: var(--accent);
-  background: rgba(79, 209, 165, 0.1);
-  border: 1px solid rgba(79, 209, 165, 0.2);
-  border-radius: 999px;
-  padding: 4px 7px;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.home-cloud-arrow { color: var(--accent); font-size: 24px; line-height: 1; }
-.section-divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
-.section-divider::before, .section-divider::after { content: ""; height: 1px; flex: 1; background: var(--card-2); }
-.section-divider span { white-space: nowrap; }
-
 .top { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 4px 4px; }
 .top h1 { line-height: 1.05; }
 .top-actions { display: flex; align-items: center; gap: 7px; }
@@ -504,8 +457,6 @@ dialog h2 { font-size: 22px; letter-spacing: -0.02em; }
 .settings-footer .btn-danger, .settings-footer .btn-primary { padding: 12px 16px; font-size: 14px; }
 
 @media (max-width: 380px) {
-  .home-cloud-cta { grid-template-columns: 40px minmax(0, 1fr) 14px; }
-  .home-cloud-badge { display: none; }
   .settings-fields { grid-template-columns: 1fr; }
   .settings-field-wide { grid-column: auto; }
 }
